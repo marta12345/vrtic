@@ -219,6 +219,7 @@
 
         <div class="start-section" id="start-section">
             <button class="start-btn" onclick="pokreniAplikaciju()">Evidencija za ubruse i mokre maramice</button>
+            <button class="start-btn" onclick="pokreniPrivole()" style="margin-top: 15px;">Privole</button>
         </div>
 
         <div class="app-content" id="app-content">
@@ -260,15 +261,55 @@
                 <p class="child-count" id="broj-djece"></p>
             </div>
         </div>
+
+        <div class="app-content" id="privole-content">
+            <h1>📝 Privole</h1>
+
+            <div class="input-section">
+                <label for="ime-privola">Ime:</label>
+                <input type="text" id="ime-privola" placeholder="Unesite ime">
+                <label for="prezime-privola">Prezime:</label>
+                <input type="text" id="prezime-privola" placeholder="Unesite prezime">
+                <button onclick="dodajPrivolu()">Dodaj dijete</button>
+            </div>
+
+            <div class="table-section">
+                <table id="tablica-privole">
+                    <thead>
+                        <tr>
+                            <th>Br.</th>
+                            <th>Ime i prezime</th>
+                            <th>Fotografiranje</th>
+                            <th>Izleti</th>
+                            <th>Objava na webu</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tijelo-privole">
+                    </tbody>
+                </table>
+                <p class="empty-message" id="prazna-poruka-privole">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
+                <p class="child-count" id="broj-djece-privole"></p>
+            </div>
+        </div>
     </div>
 
     <script>
         let djeca = [];
+        let privole = [];
 
         function pokreniAplikaciju() {
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
+            document.getElementById('privole-content').style.display = 'none';
             document.getElementById('ime').focus();
+        }
+
+        function pokreniPrivole() {
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('privole-content').style.display = 'block';
+            document.getElementById('ime-privola').focus();
         }
 
         function dodajDijete() {
@@ -338,6 +379,70 @@
             });
         }
 
+        // Privole funkcije
+        function dodajPrivolu() {
+            const ime = document.getElementById('ime-privola').value.trim();
+            const prezime = document.getElementById('prezime-privola').value.trim();
+
+            if (!ime || !prezime) {
+                alert('Molimo unesite ime i prezime djeteta.');
+                return;
+            }
+
+            if (privole.length >= 30) {
+                alert('Maksimalan broj djece (30) je dosegnut.');
+                return;
+            }
+
+            privole.push({ ime: ime, prezime: prezime, fotografiranje: false, izleti: false, web: false });
+
+            document.getElementById('ime-privola').value = '';
+            document.getElementById('prezime-privola').value = '';
+            document.getElementById('ime-privola').focus();
+
+            prikaziPrivole();
+        }
+
+        function obrisiPrivolu(index) {
+            privole.splice(index, 1);
+            prikaziPrivole();
+        }
+
+        function togglePrivola(index, polje) {
+            privole[index][polje] = !privole[index][polje];
+            prikaziPrivole();
+        }
+
+        function prikaziPrivole() {
+            const tbody = document.getElementById('tijelo-privole');
+            const poruka = document.getElementById('prazna-poruka-privole');
+            const brojDjece = document.getElementById('broj-djece-privole');
+
+            tbody.innerHTML = '';
+
+            if (privole.length === 0) {
+                poruka.style.display = 'block';
+                brojDjece.textContent = '';
+                return;
+            }
+
+            poruka.style.display = 'none';
+            brojDjece.textContent = `Ukupno djece: ${privole.length}/30`;
+
+            privole.forEach((dijete, index) => {
+                const red = document.createElement('tr');
+                red.innerHTML = `
+                    <td>${index + 1}.</td>
+                    <td>${dijete.ime} ${dijete.prezime}</td>
+                    <td><input type="checkbox" ${dijete.fotografiranje ? 'checked' : ''} onchange="togglePrivola(${index}, 'fotografiranje')"></td>
+                    <td><input type="checkbox" ${dijete.izleti ? 'checked' : ''} onchange="togglePrivola(${index}, 'izleti')"></td>
+                    <td><input type="checkbox" ${dijete.web ? 'checked' : ''} onchange="togglePrivola(${index}, 'web')"></td>
+                    <td><button class="delete-btn" onclick="obrisiPrivolu(${index})">✕</button></td>
+                `;
+                tbody.appendChild(red);
+            });
+        }
+
         // Enter tipka za brže dodavanje
         document.getElementById('ime').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -348,6 +453,18 @@
         document.getElementById('prezime').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 dodajDijete();
+            }
+        });
+
+        document.getElementById('ime-privola').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('prezime-privola').focus();
+            }
+        });
+
+        document.getElementById('prezime-privola').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                dodajPrivolu();
             }
         });
     </script>
