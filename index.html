@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        if (new URLSearchParams(window.location.search).get('admin') === 'true') {
+            window.location.replace('admin.html');
+        }
+    </script>
     <title>Vrtićko doba - Evidencija ubrusa / mokrih maramica</title>
     <style>
         * {

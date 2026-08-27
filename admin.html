@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vrtićko doba - Admin panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .admin-header h1 {
+            color: white;
+            font-size: 1.4rem;
+        }
+
+        .admin-header .badge {
+            background: #e94560;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .admin-layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Sidebar - Vrtići */
+        .sidebar {
+            width: 250px;
+            background: #16213e;
+            padding: 20px 0;
+            border-right: 1px solid #0f3460;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #a0a0b0;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+
+        .vrtic-tab {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #ccc;
+            text-align: left;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .vrtic-tab:hover {
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+
+        .vrtic-tab.active {
+            background: rgba(233, 69, 96, 0.1);
+            color: #e94560;
+            border-left-color: #e94560;
+            font-weight: 600;
+        }
+
+        .add-vrtic-btn {
+            display: block;
+            width: calc(100% - 40px);
+            margin: 15px 20px;
+            padding: 10px;
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border: 1px dashed #e94560;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .add-vrtic-btn:hover {
+            background: rgba(233, 69, 96, 0.3);
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            background: #f0f2f5;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .vrtic-title {
+            font-size: 1.5rem;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .vrtic-title .icon {
+            font-size: 1.8rem;
+        }
+
+        /* Grupe tabs */
+        .grupe-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0;
+        }
+
+        .grupa-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .grupa-tab:hover {
+            color: #333;
+        }
+
+        .grupa-tab.active {
+            color: #e94560;
+            border-bottom-color: #e94560;
+            font-weight: 600;
+        }
+
+        .add-grupa-btn {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            color: #e94560;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: -2px;
+        }
+
+        .add-grupa-btn:hover {
+            color: #ff6b81;
+        }
+
+        /* Grupa content */
+        .grupa-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .grupa-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .grupa-info h3 {
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .grupa-info .stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: #f8f9ff;
+            padding: 8px 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box .number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-box .label {
+            font-size: 0.7rem;
+            color: #999;
+            text-transform: uppercase;
+        }
+
+        /* Tablica djece */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        thead th {
+            background: #1a1a2e;
+            color: white;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        thead th:first-child {
+            text-align: center;
+            width: 40px;
+        }
+
+        thead th:nth-child(2) {
+            text-align: left;
+            min-width: 160px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9ff;
+        }
+
+        tbody tr:hover {
+            background-color: #e8ecff;
+        }
+
+        tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        tbody td:first-child {
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+        }
+
+        tbody td:nth-child(2) {
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+            text-transform: uppercase;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-small:hover {
+            opacity: 0.8;
+        }
+
+        .btn-edit {
+            background: #ffa502;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-add {
+            background: #2ed573;
+            color: white;
+        }
+
+        /* Add child form */
+        .add-child-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .add-child-form input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .add-child-form input:focus {
+            outline: none;
+            border-color: #e94560;
+        }
+
+        .add-child-form button {
+            padding: 8px 16px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .add-child-form button:hover {
+            background: #ff6b81;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        /* Mjesec oznake */
+        .mjesec-oznaka {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            line-height: 22px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            background: #eee;
+            color: #999;
+        }
+
+        .mjesec-oznaka.plus {
+            background: #2ed573;
+            color: white;
+        }
+
+        .mjesec-oznaka.minus {
+            background: #ff4757;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1>🏫 Vrtićko doba — Admin panel</h1>
+        <span class="badge">SUPER USER</span>
+    </div>
+
+    <div class="admin-layout">
+        <div class="sidebar">
+            <h3>Vrtići</h3>
+            <div id="vrtic-lista"></div>
+            <button class="add-vrtic-btn" onclick="dodajVrtic()">+ Dodaj vrtić</button>
+        </div>
+
+        <div class="main-content" id="main-content">
+            <div class="empty-state">
+                <div class="icon">🏫</div>
+                <p>Odaberite vrtić iz izbornika ili dodajte novi.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let vrtici = [
+            {
+                id: 1,
+                naziv: 'DV Sunce',
+                grupe: [
+                    { id: 1, naziv: 'Leptirići', djeca: [
+                        { ime: 'Ana', prezime: 'Horvat', mjeseci: ['+','+','+','','+','+','','','','','',''] },
+                        { ime: 'Marko', prezime: 'Kovačević', mjeseci: ['+','+','','+','+','+','','','','','',''] },
+                        { ime: 'Petra', prezime: 'Babić', mjeseci: ['+','+','+','+','','+','','','','','',''] },
+                        { ime: 'Ivan', prezime: 'Novak', mjeseci: ['+','','+','+','+','+','','','','','',''] },
+                        { ime: 'Lucija', prezime: 'Jurić', mjeseci: ['+','+','+','+','+','','','','','','',''] }
+                    ]},
+                    { id: 2, naziv: 'Bubamare', djeca: [
+                        { ime: 'Luka', prezime: 'Matić', mjeseci: ['+','+','+','','','','','','','','',''] },
+                        { ime: 'Mia', prezime: 'Tomić', mjeseci: ['+','+','','+','','','','','','','',''] },
+                        { ime: 'Filip', prezime: 'Perić', mjeseci: ['','+','+','+','','','','','','','',''] }
+                    ]},
+                    { id: 3, naziv: 'Zvjezdice', djeca: [] }
+                ]
+            },
+            {
+                id: 2,
+                naziv: 'DV Radost',
+                grupe: [
+                    { id: 1, naziv: 'Medvjedići', djeca: [
+                        { ime: 'Nina', prezime: 'Šimunović', mjeseci: ['+','+','+','+','+','+','','','','','',''] },
+                        { ime: 'Dino', prezime: 'Vuković', mjeseci: ['+','','+','','+','+','','','','','',''] }
+                    ]},
+                    { id: 2, naziv: 'Pčelice', djeca: [
+                        { ime: 'Ema', prezime: 'Knežević', mjeseci: ['+','+','+','+','','','','','','','',''] },
+                        { ime: 'Leo', prezime: 'Božić', mjeseci: ['+','+','','+','','','','','','','',''] },
+                        { ime: 'Sara', prezime: 'Marić', mjeseci: ['','+','+','+','','','','','','','',''] },
+                        { ime: 'Jakov', prezime: 'Pavlović', mjeseci: ['+','+','+','','','','','','','','',''] }
+                    ]}
+                ]
+            },
+            {
+                id: 3,
+                naziv: 'DV Cvrčak',
+                grupe: [
+                    { id: 1, naziv: 'Ribice', djeca: [
+                        { ime: 'Karla', prezime: 'Stanić', mjeseci: ['+','+','+','+','+','+','','','','','',''] },
+                        { ime: 'Matej', prezime: 'Đurić', mjeseci: ['+','+','','+','+','','','','','','',''] },
+                        { ime: 'Iva', prezime: 'Kralj', mjeseci: ['+','','+','+','+','+','','','','','',''] }
+                    ]}
+                ]
+            }
+        ];
+
+        let aktivniVrtic = null;
+        let aktivnaGrupa = null;
+        let vrticIdBrojac = 4;
+        let grupaIdBrojac = 10;
+
+        function renderVrticiSidebar() {
+            const lista = document.getElementById('vrtic-lista');
+            lista.innerHTML = '';
+            vrtici.forEach(v => {
+                const btn = document.createElement('button');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id ? ' active' : '');
+                btn.textContent = v.naziv;
+                btn.onclick = () => odaberiVrtic(v.id);
+                lista.appendChild(btn);
+            });
+        }
+
+        function odaberiVrtic(id) {
+            aktivniVrtic = vrtici.find(v => v.id === id);
+            aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiGrupu(grupaId) {
+            aktivnaGrupa = aktivniVrtic.grupe.find(g => g.id === grupaId);
+            renderMainContent();
+        }
+
+        function renderMainContent() {
+            const main = document.getElementById('main-content');
+            if (!aktivniVrtic) {
+                main.innerHTML = `<div class="empty-state"><div class="icon">🏫</div><p>Odaberite vrtić iz izbornika ili dodajte novi.</p></div>`;
+                return;
+            }
+
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                grupeTabs += `<button class="grupa-tab ${aktivnaGrupa && aktivnaGrupa.id === g.id ? 'active' : ''}" onclick="odaberiGrupu(${g.id})">${g.naziv} (${g.djeca.length})</button>`;
+            });
+
+            let content = `
+                <div class="vrtic-title">
+                    <span class="icon">🏫</span>
+                    <span>${aktivniVrtic.naziv}</span>
+                </div>
+                <div class="grupe-tabs">
+                    ${grupeTabs}
+                    <button class="add-grupa-btn" onclick="dodajGrupu()">+ Nova grupa</button>
+                </div>
+            `;
+
+            if (aktivnaGrupa) {
+                content += renderGrupa(aktivnaGrupa);
+            } else if (aktivniVrtic.grupe.length === 0) {
+                content += `<div class="empty-state"><div class="icon">👶</div><p>Ovaj vrtić nema grupa. Dodajte prvu grupu.</p></div>`;
+            }
+
+            main.innerHTML = content;
+        }
+
+        function renderGrupa(grupa) {
+            const brojDjece = grupa.djeca.length;
+            const mjeseci = ['IX','X','XI','XII','I','II','III','IV','V','VI','VII','VIII'];
+
+            let tableRows = '';
+            grupa.djeca.forEach((d, i) => {
+                let mjeseciCells = '';
+                mjeseci.forEach((m, mi) => {
+                    const val = d.mjeseci ? d.mjeseci[mi] : '';
+                    let klasa = 'mjesec-oznaka';
+                    if (val === '+') klasa += ' plus';
+                    else if (val === '-') klasa += ' minus';
+                    mjeseciCells += `<td><span class="${klasa}" onclick="toggleMjesecAdmin(${aktivniVrtic.id}, ${grupa.id}, ${i}, ${mi})">${val || '·'}</span></td>`;
+                });
+
+                tableRows += `
+                    <tr>
+                        <td>${i + 1}.</td>
+                        <td>${d.ime} ${d.prezime}</td>
+                        ${mjeseciCells}
+                        <td>
+                            <button class="btn-small btn-edit" onclick="urediDijeteAdmin(${aktivniVrtic.id}, ${grupa.id}, ${i})">✏️</button>
+                            <button class="btn-small btn-delete" onclick="obrisiDijeteAdmin(${aktivniVrtic.id}, ${grupa.id}, ${i})">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            return `
+                <div class="grupa-content">
+                    <div class="grupa-info">
+                        <h3>Grupa: ${grupa.naziv}</h3>
+                        <div class="stats">
+                            <div class="stat-box">
+                                <div class="number">${brojDjece}</div>
+                                <div class="label">Djece</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="number">30</div>
+                                <div class="label">Max</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${brojDjece > 0 ? `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th>Ime i prezime</th>
+                                <th>IX</th>
+                                <th>X</th>
+                                <th>XI</th>
+                                <th>XII</th>
+                                <th>I</th>
+                                <th>II</th>
+                                <th>III</th>
+                                <th>IV</th>
+                                <th>V</th>
+                                <th>VI</th>
+                                <th>VII</th>
+                                <th>VIII</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    ` : `<div class="empty-state"><div class="icon">👶</div><p>Nema djece u ovoj grupi.</p></div>`}
+
+                    <div class="add-child-form">
+                        <input type="text" id="novo-ime" placeholder="Ime">
+                        <input type="text" id="novo-prezime" placeholder="Prezime">
+                        <button onclick="dodajDijeteAdmin()">+ Dodaj dijete</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function dodajVrtic() {
+            const naziv = prompt('Naziv novog vrtića:');
+            if (!naziv || !naziv.trim()) return;
+            vrtici.push({ id: vrticIdBrojac++, naziv: naziv.trim(), grupe: [] });
+            renderVrticiSidebar();
+        }
+
+        function dodajGrupu() {
+            const naziv = prompt('Naziv nove grupe:');
+            if (!naziv || !naziv.trim()) return;
+            aktivniVrtic.grupe.push({ id: grupaIdBrojac++, naziv: naziv.trim(), djeca: [] });
+            aktivnaGrupa = aktivniVrtic.grupe[aktivniVrtic.grupe.length - 1];
+            renderMainContent();
+        }
+
+        function dodajDijeteAdmin() {
+            const ime = document.getElementById('novo-ime').value.trim();
+            const prezime = document.getElementById('novo-prezime').value.trim();
+            if (!ime || !prezime) { alert('Unesite ime i prezime.'); return; }
+            if (aktivnaGrupa.djeca.length >= 30) { alert('Maksimalno 30 djece po grupi.'); return; }
+            aktivnaGrupa.djeca.push({ ime, prezime, mjeseci: new Array(12).fill('') });
+            renderMainContent();
+        }
+
+        function urediDijeteAdmin(vrticId, grupaId, index) {
+            const vrtic = vrtici.find(v => v.id === vrticId);
+            const grupa = vrtic.grupe.find(g => g.id === grupaId);
+            const dijete = grupa.djeca[index];
+            const novoIme = prompt('Novo ime:', dijete.ime);
+            if (novoIme === null) return;
+            const novoPrezime = prompt('Novo prezime:', dijete.prezime);
+            if (novoPrezime === null) return;
+            if (novoIme.trim() && novoPrezime.trim()) {
+                dijete.ime = novoIme.trim();
+                dijete.prezime = novoPrezime.trim();
+                renderMainContent();
+            }
+        }
+
+        function obrisiDijeteAdmin(vrticId, grupaId, index) {
+            if (!confirm('Obrisati dijete?')) return;
+            const vrtic = vrtici.find(v => v.id === vrticId);
+            const grupa = vrtic.grupe.find(g => g.id === grupaId);
+            grupa.djeca.splice(index, 1);
+            renderMainContent();
+        }
+
+        function toggleMjesecAdmin(vrticId, grupaId, dijeteIndex, mjesecIndex) {
+            const vrtic = vrtici.find(v => v.id === vrticId);
+            const grupa = vrtic.grupe.find(g => g.id === grupaId);
+            const dijete = grupa.djeca[dijeteIndex];
+            if (!dijete.mjeseci) dijete.mjeseci = new Array(12).fill('');
+            const trenutno = dijete.mjeseci[mjesecIndex];
+            if (trenutno === '') dijete.mjeseci[mjesecIndex] = '+';
+            else if (trenutno === '+') dijete.mjeseci[mjesecIndex] = '-';
+            else dijete.mjeseci[mjesecIndex] = '';
+            renderMainContent();
+        }
+
+        // Inicijalizacija
+        renderVrticiSidebar();
+    </script>
+</body>
+</html>
