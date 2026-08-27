@@ -231,6 +231,45 @@
             color: white;
         }
 
+        .edit-btn {
+            background: #ffa502;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: #ffbe76;
+        }
+
+        .mjesec-btn {
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 30px;
+            transition: background 0.2s;
+        }
+
+        .mjesec-btn.plus {
+            background: #2ed573;
+            color: white;
+            border-color: #2ed573;
+        }
+
+        .mjesec-btn.minus {
+            background: #ff4757;
+            color: white;
+            border-color: #ff4757;
+        }
+
         .app-content {
             display: none;
             position: relative;
@@ -555,27 +594,52 @@
             poruka.style.display = 'none';
             brojDjece.textContent = `Ukupno djece: ${djeca.length}/30`;
 
+            const mjeseci = ['IX','X','XI','XII','I','II','III','IV','V','VI','VII','VIII'];
+
             djeca.forEach((dijete, index) => {
                 const red = document.createElement('tr');
+                let mjeseciHtml = '';
+                mjeseci.forEach((m, mi) => {
+                    const val = dijete.mjeseci ? dijete.mjeseci[mi] : '';
+                    let klasa = 'mjesec-btn';
+                    if (val === '+') klasa += ' plus';
+                    else if (val === '-') klasa += ' minus';
+                    mjeseciHtml += `<td><button class="${klasa}" onclick="toggleMjesec(${index}, ${mi})">${val || ''}</button></td>`;
+                });
                 red.innerHTML = `
                     <td>${index + 1}.</td>
                     <td>${dijete.ime} ${dijete.prezime}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td><button class="delete-btn" onclick="obrisiDijete(${index})">✕</button></td>
+                    ${mjeseciHtml}
+                    <td>
+                        <button class="edit-btn" onclick="urediDijete(${index})">✏️</button>
+                        <button class="delete-btn" onclick="obrisiDijete(${index})">✕</button>
+                    </td>
                 `;
                 tbody.appendChild(red);
             });
+        }
+
+        function toggleMjesec(dijeteIndex, mjesecIndex) {
+            if (!djeca[dijeteIndex].mjeseci) {
+                djeca[dijeteIndex].mjeseci = new Array(12).fill('');
+            }
+            const trenutno = djeca[dijeteIndex].mjeseci[mjesecIndex];
+            if (trenutno === '') djeca[dijeteIndex].mjeseci[mjesecIndex] = '+';
+            else if (trenutno === '+') djeca[dijeteIndex].mjeseci[mjesecIndex] = '-';
+            else djeca[dijeteIndex].mjeseci[mjesecIndex] = '';
+            prikaziTablicu();
+        }
+
+        function urediDijete(index) {
+            const novoIme = prompt('Unesite novo ime:', djeca[index].ime);
+            if (novoIme === null) return;
+            const novoPrezime = prompt('Unesite novo prezime:', djeca[index].prezime);
+            if (novoPrezime === null) return;
+            if (novoIme.trim() && novoPrezime.trim()) {
+                djeca[index].ime = novoIme.trim();
+                djeca[index].prezime = novoPrezime.trim();
+                prikaziTablicu();
+            }
         }
 
         // Privole funkcije
