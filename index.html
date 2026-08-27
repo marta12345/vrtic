@@ -360,6 +360,38 @@
         </div>
 
         <div id="custom-tablice-container"></div>
+
+        <!-- Sučelje za kreiranje nove tablice -->
+        <div class="app-content" id="nova-tablica-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h1>📋 Nova tablica</h1>
+
+            <!-- Korak 1: Naziv -->
+            <div id="korak1" class="input-section" style="flex-direction: column;">
+                <h3 style="margin-bottom: 10px; color: #667eea;">Korak 1: Unesite naziv tablice</h3>
+                <input type="text" id="naziv-nove-tablice" placeholder="Naziv tablice" style="width: 300px;">
+                <button onclick="korak2()">Dalje →</button>
+            </div>
+
+            <!-- Korak 2: Učitaj djecu -->
+            <div id="korak2-section" style="display: none;">
+                <div class="input-section" style="flex-direction: column;">
+                    <h3 style="margin-bottom: 10px; color: #667eea;">Korak 2: Učitajte djecu iz grupe</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Sva djeca iz evidencije će biti automatski dodana u novu tablicu.</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="ucitajDjecuIzGrupe()">Učitaj djecu iz grupe</button>
+                        <button onclick="kreirajPraznuTablicu()" style="background: #aaa;">Kreiraj praznu tablicu</button>
+                    </div>
+                </div>
+                <div id="pregled-djece" style="display: none;" class="table-section">
+                    <h3 style="text-align: center; margin-bottom: 15px; color: #333;">Djeca koja će biti dodana:</h3>
+                    <ul id="lista-djece-pregled" style="list-style: none; padding: 0;"></ul>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="potvrdNovuTablicu()" style="padding: 10px 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">✓ Kreiraj tablicu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -387,6 +419,7 @@
         function zatvori() {
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('privole-content').style.display = 'none';
+            document.getElementById('nova-tablica-content').style.display = 'none';
             sakrijeCustomTablice();
             document.getElementById('start-section').style.display = 'block';
         }
@@ -398,12 +431,64 @@
         }
 
         function dodajNovuTablicu() {
-            const naziv = prompt('Unesite naziv nove tablice:');
-            if (!naziv || !naziv.trim()) return;
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('privole-content').style.display = 'none';
+            sakrijeCustomTablice();
+            document.getElementById('nova-tablica-content').style.display = 'block';
+            document.getElementById('korak1').style.display = 'flex';
+            document.getElementById('korak2-section').style.display = 'none';
+            document.getElementById('pregled-djece').style.display = 'none';
+            document.getElementById('naziv-nove-tablice').value = '';
+            document.getElementById('naziv-nove-tablice').focus();
+        }
 
+        let noviNazivTablice = '';
+
+        function korak2() {
+            const naziv = document.getElementById('naziv-nove-tablice').value.trim();
+            if (!naziv) {
+                alert('Molimo unesite naziv tablice.');
+                return;
+            }
+            noviNazivTablice = naziv;
+            document.getElementById('korak1').style.display = 'none';
+            document.getElementById('korak2-section').style.display = 'block';
+        }
+
+        function ucitajDjecuIzGrupe() {
+            const lista = document.getElementById('lista-djece-pregled');
+            lista.innerHTML = '';
+
+            if (djeca.length === 0) {
+                lista.innerHTML = '<li style="text-align: center; color: #999; padding: 10px;">Nema djece u evidenciji. Tablica će biti kreirana prazna.</li>';
+            } else {
+                djeca.forEach((d, i) => {
+                    const li = document.createElement('li');
+                    li.style.padding = '8px 15px';
+                    li.style.borderBottom = '1px solid #eee';
+                    li.style.textTransform = 'uppercase';
+                    li.textContent = `${i + 1}. ${d.ime} ${d.prezime}`;
+                    lista.appendChild(li);
+                });
+            }
+
+            document.getElementById('pregled-djece').style.display = 'block';
+        }
+
+        function kreirajPraznuTablicu() {
+            kreirajCustomTablicu([]);
+        }
+
+        function potvrdNovuTablicu() {
+            const kopijaDjece = djeca.map(d => ({ ime: d.ime, prezime: d.prezime }));
+            kreirajCustomTablicu(kopijaDjece);
+        }
+
+        function kreirajCustomTablicu(djecaZaTablicu) {
             customBrojac++;
             const id = customBrojac;
-            const tablica = { id: id, naziv: naziv.trim(), djeca: [] };
+            const tablica = { id: id, naziv: noviNazivTablice, djeca: djecaZaTablicu };
             customTablice.push(tablica);
 
             // Dodaj gumb na početni ekran
@@ -411,7 +496,7 @@
             const noviGumb = document.createElement('button');
             noviGumb.className = 'start-btn';
             noviGumb.style.marginTop = '15px';
-            noviGumb.textContent = naziv.trim();
+            noviGumb.textContent = noviNazivTablice;
             noviGumb.onclick = function() { pokreniCustomTablicu(id); };
             // Ubaci prije gumba "+ Dodaj novu tablicu"
             const dodajGumb = startSection.lastElementChild;
@@ -424,7 +509,7 @@
             div.id = `custom-${id}`;
             div.innerHTML = `
                 <button class="close-btn" onclick="zatvori()">✕</button>
-                <h1>📋 ${naziv.trim()}</h1>
+                <h1>📋 ${noviNazivTablice}</h1>
                 <div class="input-section">
                     <label>Ime:</label>
                     <input type="text" id="ime-custom-${id}" placeholder="Unesite ime">
@@ -469,6 +554,11 @@
             document.getElementById(`prezime-custom-${id}`).addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') dodajDijeteCustom(id);
             });
+
+            // Prikaži tablicu i sakrij sučelje za kreiranje
+            document.getElementById('nova-tablica-content').style.display = 'none';
+            prikaziCustomTablicu(id);
+            pokreniCustomTablicu(id);
         }
 
         function pokreniCustomTablicu(id) {
