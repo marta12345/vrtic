@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vrtićko doba - Evidencija djece</title>
+    <title>Vrtićko doba - Evidencija za ubruse i mokre maramice</title>
     <style>
         * {
             margin: 0;
@@ -29,6 +29,37 @@
             margin-bottom: 30px;
             font-size: 2rem;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .start-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        .app-content {
+            display: none;
         }
 
         .input-section {
@@ -184,48 +215,62 @@
 </head>
 <body>
     <div class="container">
-        <h1>🧒 Vrtićko doba - Evidencija djece</h1>
+        <h1>🧒 Vrtićko doba</h1>
 
-        <div class="input-section">
-            <label for="ime">Ime:</label>
-            <input type="text" id="ime" placeholder="Unesite ime">
-            <label for="prezime">Prezime:</label>
-            <input type="text" id="prezime" placeholder="Unesite prezime">
-            <button onclick="dodajDijete()">Dodaj dijete</button>
+        <div class="start-section" id="start-section">
+            <button class="start-btn" onclick="pokreniAplikaciju()">Evidencija za ubruse i mokre maramice</button>
         </div>
 
-        <div class="table-section">
-            <h2>Popis djece</h2>
-            <table id="tablica">
-                <thead>
-                    <tr>
-                        <th>Br.</th>
-                        <th>Ime i prezime</th>
-                        <th>IX</th>
-                        <th>X</th>
-                        <th>XI</th>
-                        <th>XII</th>
-                        <th>I</th>
-                        <th>II</th>
-                        <th>III</th>
-                        <th>IV</th>
-                        <th>V</th>
-                        <th>VI</th>
-                        <th>VII</th>
-                        <th>VIII</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="tijelo-tablice">
-                </tbody>
-            </table>
-            <p class="empty-message" id="prazna-poruka">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
-            <p class="child-count" id="broj-djece"></p>
+        <div class="app-content" id="app-content">
+            <h1>📋 Evidencija za ubruse i mokre maramice</h1>
+
+            <div class="input-section">
+                <label for="ime">Ime:</label>
+                <input type="text" id="ime" placeholder="Unesite ime">
+                <label for="prezime">Prezime:</label>
+                <input type="text" id="prezime" placeholder="Unesite prezime">
+                <button onclick="dodajDijete()">Dodaj dijete</button>
+            </div>
+
+            <div class="table-section">
+                <h2>Popis djece</h2>
+                <table id="tablica">
+                    <thead>
+                        <tr>
+                            <th>Br.</th>
+                            <th>Ime i prezime</th>
+                            <th>IX</th>
+                            <th>X</th>
+                            <th>XI</th>
+                            <th>XII</th>
+                            <th>I</th>
+                            <th>II</th>
+                            <th>III</th>
+                            <th>IV</th>
+                            <th>V</th>
+                            <th>VI</th>
+                            <th>VII</th>
+                            <th>VIII</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tijelo-tablice">
+                    </tbody>
+                </table>
+                <p class="empty-message" id="prazna-poruka">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
+                <p class="child-count" id="broj-djece"></p>
+            </div>
         </div>
     </div>
 
     <script>
         let djeca = [];
+
+        function pokreniAplikaciju() {
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('ime').focus();
+        }
 
         function dodajDijete() {
             const ime = document.getElementById('ime').value.trim();
