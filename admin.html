@@ -461,6 +461,7 @@
         let aktivniVrtic = null;
         let aktivnaGrupa = null;
         let prikazPrivole = false;
+        let prikazDolasci = false;
         let vrticIdBrojac = 4;
         let grupaIdBrojac = 10;
 
@@ -469,7 +470,7 @@
             lista.innerHTML = '';
             vrtici.forEach(v => {
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.onclick = () => odaberiVrtic(v.id);
                 lista.appendChild(btn);
@@ -480,6 +481,13 @@
                 privolaBtn.textContent = '📝 Privole';
                 privolaBtn.onclick = () => odaberiPrivole(v.id);
                 lista.appendChild(privolaBtn);
+
+                // Evidencija dolazaka kartica
+                const dolasciBtn = document.createElement('button');
+                dolasciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazDolasci ? ' active' : '');
+                dolasciBtn.textContent = '📅 Evidencija dolazaka';
+                dolasciBtn.onclick = () => odaberiDolazke(v.id);
+                lista.appendChild(dolasciBtn);
             });
         }
 
@@ -487,6 +495,7 @@
             aktivniVrtic = vrtici.find(v => v.id === id);
             aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
             prikazPrivole = false;
+            prikazDolasci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -495,6 +504,16 @@
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = null;
             prikazPrivole = true;
+            prikazDolasci = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiDolazke(vrticId) {
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
+            prikazPrivole = false;
+            prikazDolasci = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -513,6 +532,11 @@
 
             if (prikazPrivole) {
                 main.innerHTML = renderPrivole();
+                return;
+            }
+
+            if (prikazDolasci) {
+                main.innerHTML = renderDolasci();
                 return;
             }
 
@@ -677,6 +701,98 @@
             if (trenutno === '') dijete.mjeseci[mjesecIndex] = '+';
             else if (trenutno === '+') dijete.mjeseci[mjesecIndex] = '-';
             else dijete.mjeseci[mjesecIndex] = '';
+            renderMainContent();
+        }
+
+        function renderDolasci() {
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                grupeTabs += `<button class="grupa-tab ${aktivnaGrupa && aktivnaGrupa.id === g.id ? 'active' : ''}" onclick="odaberiGrupuDolasci(${g.id})">${g.naziv} (${g.djeca.length})</button>`;
+            });
+
+            let content = `
+                <div class="vrtic-title">
+                    <span class="icon">📅</span>
+                    <span>Evidencija dolazaka — ${aktivniVrtic.naziv}</span>
+                </div>
+                <div class="grupe-tabs">
+                    ${grupeTabs}
+                </div>
+            `;
+
+            if (aktivnaGrupa && aktivnaGrupa.djeca.length > 0) {
+                const dani = [];
+                for (let i = 1; i <= 31; i++) dani.push(i);
+
+                let tableRows = '';
+                aktivnaGrupa.djeca.forEach((d, i) => {
+                    let daniCells = '';
+                    dani.forEach((dan) => {
+                        const val = d.dolasci ? (d.dolasci[dan - 1] || '') : '';
+                        let klasa = 'mjesec-oznaka';
+                        if (val === '+') klasa += ' plus';
+                        else if (val === '-') klasa += ' minus';
+                        daniCells += `<td><span class="${klasa}" onclick="toggleDolazak(${i}, ${dan - 1})">${val || '·'}</span></td>`;
+                    });
+
+                    tableRows += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td>${d.ime} ${d.prezime}</td>
+                            ${daniCells}
+                        </tr>
+                    `;
+                });
+
+                let daniHeader = '';
+                dani.forEach(d => {
+                    daniHeader += `<th>${d}</th>`;
+                });
+
+                content += `
+                    <div class="grupa-content" style="overflow-x: auto;">
+                        <div class="grupa-info">
+                            <h3>Grupa: ${aktivnaGrupa.naziv} — Mjesec: <select id="mjesec-select" onchange="renderMainContent()" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                                <option>Rujan</option><option>Listopad</option><option>Studeni</option><option>Prosinac</option>
+                                <option>Siječanj</option><option>Veljača</option><option>Ožujak</option><option>Travanj</option>
+                                <option>Svibanj</option><option>Lipanj</option><option>Srpanj</option><option>Kolovoz</option>
+                            </select></h3>
+                        </div>
+                        <table style="font-size: 0.75rem;">
+                            <thead>
+                                <tr>
+                                    <th>Br.</th>
+                                    <th>Ime i prezime</th>
+                                    ${daniHeader}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tableRows}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (aktivnaGrupa) {
+                content += `<div class="empty-state"><div class="icon">👶</div><p>Nema djece u ovoj grupi.</p></div>`;
+            } else {
+                content += `<div class="empty-state"><div class="icon">👶</div><p>Ovaj vrtić nema grupa.</p></div>`;
+            }
+
+            return content;
+        }
+
+        function odaberiGrupuDolasci(grupaId) {
+            aktivnaGrupa = aktivniVrtic.grupe.find(g => g.id === grupaId);
+            renderMainContent();
+        }
+
+        function toggleDolazak(dijeteIndex, danIndex) {
+            const dijete = aktivnaGrupa.djeca[dijeteIndex];
+            if (!dijete.dolasci) dijete.dolasci = new Array(31).fill('');
+            const trenutno = dijete.dolasci[danIndex];
+            if (trenutno === '') dijete.dolasci[danIndex] = '+';
+            else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
+            else dijete.dolasci[danIndex] = '';
             renderMainContent();
         }
 
