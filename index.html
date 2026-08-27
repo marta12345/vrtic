@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vrtićko doba - Evidencija djece</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .input-section label {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .input-section input {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            width: 200px;
+        }
+
+        .input-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-section button {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .input-section button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .input-section button:active {
+            transform: translateY(0);
+        }
+
+        .table-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }
+
+        .table-section h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        thead th:first-child {
+            text-align: left;
+            min-width: 40px;
+        }
+
+        thead th:nth-child(2) {
+            text-align: left;
+            min-width: 180px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9ff;
+        }
+
+        tbody tr:hover {
+            background-color: #e8ecff;
+        }
+
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+
+        tbody td:first-child {
+            text-align: center;
+            font-weight: 600;
+            color: #666;
+        }
+
+        tbody td:nth-child(2) {
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
+        .child-count {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .delete-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b81;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧒 Vrtićko doba - Evidencija djece</h1>
+
+        <div class="input-section">
+            <label for="ime">Ime:</label>
+            <input type="text" id="ime" placeholder="Unesite ime">
+            <label for="prezime">Prezime:</label>
+            <input type="text" id="prezime" placeholder="Unesite prezime">
+            <button onclick="dodajDijete()">Dodaj dijete</button>
+        </div>
+
+        <div class="table-section">
+            <h2>Popis djece</h2>
+            <table id="tablica">
+                <thead>
+                    <tr>
+                        <th>Br.</th>
+                        <th>Ime i prezime</th>
+                        <th>IX</th>
+                        <th>X</th>
+                        <th>XI</th>
+                        <th>XII</th>
+                        <th>I</th>
+                        <th>II</th>
+                        <th>III</th>
+                        <th>IV</th>
+                        <th>V</th>
+                        <th>VI</th>
+                        <th>VII</th>
+                        <th>VIII</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tijelo-tablice">
+                </tbody>
+            </table>
+            <p class="empty-message" id="prazna-poruka">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
+            <p class="child-count" id="broj-djece"></p>
+        </div>
+    </div>
+
+    <script>
+        let djeca = [];
+
+        function dodajDijete() {
+            const ime = document.getElementById('ime').value.trim();
+            const prezime = document.getElementById('prezime').value.trim();
+
+            if (!ime || !prezime) {
+                alert('Molimo unesite ime i prezime djeteta.');
+                return;
+            }
+
+            if (djeca.length >= 25) {
+                alert('Maksimalan broj djece (25) je dosegnut.');
+                return;
+            }
+
+            djeca.push({ ime: ime, prezime: prezime });
+
+            document.getElementById('ime').value = '';
+            document.getElementById('prezime').value = '';
+            document.getElementById('ime').focus();
+
+            prikaziTablicu();
+        }
+
+        function obrisiDijete(index) {
+            djeca.splice(index, 1);
+            prikaziTablicu();
+        }
+
+        function prikaziTablicu() {
+            const tbody = document.getElementById('tijelo-tablice');
+            const poruka = document.getElementById('prazna-poruka');
+            const brojDjece = document.getElementById('broj-djece');
+
+            tbody.innerHTML = '';
+
+            if (djeca.length === 0) {
+                poruka.style.display = 'block';
+                brojDjece.textContent = '';
+                return;
+            }
+
+            poruka.style.display = 'none';
+            brojDjece.textContent = `Ukupno djece: ${djeca.length}/25`;
+
+            djeca.forEach((dijete, index) => {
+                const red = document.createElement('tr');
+                red.innerHTML = `
+                    <td>${index + 1}.</td>
+                    <td>${dijete.ime} ${dijete.prezime}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><button class="delete-btn" onclick="obrisiDijete(${index})">✕</button></td>
+                `;
+                tbody.appendChild(red);
+            });
+        }
+
+        // Enter tipka za brže dodavanje
+        document.getElementById('ime').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('prezime').focus();
+            }
+        });
+
+        document.getElementById('prezime').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                dodajDijete();
+            }
+        });
+    </script>
+</body>
+</html>
