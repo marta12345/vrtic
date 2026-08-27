@@ -331,31 +331,43 @@
             <button class="close-btn" onclick="zatvori()">✕</button>
             <h1>📝 Privole</h1>
 
-            <div class="input-section">
-                <label for="ime-privola">Ime:</label>
-                <input type="text" id="ime-privola" placeholder="Unesite ime">
-                <label for="prezime-privola">Prezime:</label>
-                <input type="text" id="prezime-privola" placeholder="Unesite prezime">
-                <button onclick="dodajPrivolu()">Dodaj dijete</button>
-            </div>
+            <div class="table-section" style="padding: 40px; line-height: 1.8; font-size: 1rem; color: #333;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h2 style="margin-bottom: 5px;">SUGLASNOST RODITELJA / SKRBNIKA</h2>
+                    <p style="color: #666;">za sudjelovanje djeteta u aktivnostima vrtića</p>
+                </div>
 
-            <div class="table-section">
-                <table id="tablica-privole">
-                    <thead>
-                        <tr>
-                            <th>Br.</th>
-                            <th>Ime i prezime</th>
-                            <th>Fotografiranje</th>
-                            <th>Izleti</th>
-                            <th>Objava na webu</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tijelo-privole">
-                    </tbody>
-                </table>
-                <p class="empty-message" id="prazna-poruka-privole">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
-                <p class="child-count" id="broj-djece-privole"></p>
+                <p>Ja, <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span> (ime i prezime roditelja/skrbnika),</p>
+
+                <p style="margin-top: 15px;">roditelj/skrbnik djeteta <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span> (ime i prezime djeteta),</p>
+
+                <p style="margin-top: 15px;">koje pohađa skupinu <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span>,</p>
+
+                <p style="margin-top: 20px;">dajem suglasnost za:</p>
+
+                <div style="margin: 15px 0 15px 20px;">
+                    <p>☐ Fotografiranje i snimanje djeteta tijekom boravka u vrtiću</p>
+                    <p>☐ Objavu fotografija / videa na web stranici i društvenim mrežama vrtića</p>
+                    <p>☐ Sudjelovanje djeteta na izletima i izvan vrtićkim aktivnostima</p>
+                    <p>☐ Pružanje prve pomoći u slučaju potrebe</p>
+                    <p>☐ Korištenje osobnih podataka djeteta u svrhu evidencije</p>
+                </div>
+
+                <p style="margin-top: 25px;">Ova suglasnost vrijedi za pedagošku godinu <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 100px; display: inline-block;">____/____</span>.</p>
+
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div>
+                        <p>Datum: <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 20px; display: inline-block;">__________</span></p>
+                    </div>
+                    <div>
+                        <p>Potpis roditelja/skrbnika:</p>
+                        <p style="border-bottom: 1px solid #333; width: 200px; margin-top: 30px;"></p>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button onclick="window.print()" style="padding: 10px 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">🖨️ Isprintaj</button>
+                </div>
             </div>
         </div>
 
@@ -396,7 +408,6 @@
 
     <script>
         let djeca = [];
-        let privole = [];
         let customTablice = [];
         let customBrojac = 0;
 
@@ -412,8 +423,8 @@
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('privole-content').style.display = 'block';
+            document.getElementById('nova-tablica-content').style.display = 'none';
             sakrijeCustomTablice();
-            document.getElementById('ime-privola').focus();
         }
 
         function zatvori() {
@@ -732,70 +743,6 @@
             }
         }
 
-        // Privole funkcije
-        function dodajPrivolu() {
-            const ime = document.getElementById('ime-privola').value.trim();
-            const prezime = document.getElementById('prezime-privola').value.trim();
-
-            if (!ime || !prezime) {
-                alert('Molimo unesite ime i prezime djeteta.');
-                return;
-            }
-
-            if (privole.length >= 30) {
-                alert('Maksimalan broj djece (30) je dosegnut.');
-                return;
-            }
-
-            privole.push({ ime: ime, prezime: prezime, fotografiranje: false, izleti: false, web: false });
-
-            document.getElementById('ime-privola').value = '';
-            document.getElementById('prezime-privola').value = '';
-            document.getElementById('ime-privola').focus();
-
-            prikaziPrivole();
-        }
-
-        function obrisiPrivolu(index) {
-            privole.splice(index, 1);
-            prikaziPrivole();
-        }
-
-        function togglePrivola(index, polje) {
-            privole[index][polje] = !privole[index][polje];
-            prikaziPrivole();
-        }
-
-        function prikaziPrivole() {
-            const tbody = document.getElementById('tijelo-privole');
-            const poruka = document.getElementById('prazna-poruka-privole');
-            const brojDjece = document.getElementById('broj-djece-privole');
-
-            tbody.innerHTML = '';
-
-            if (privole.length === 0) {
-                poruka.style.display = 'block';
-                brojDjece.textContent = '';
-                return;
-            }
-
-            poruka.style.display = 'none';
-            brojDjece.textContent = `Ukupno djece: ${privole.length}/30`;
-
-            privole.forEach((dijete, index) => {
-                const red = document.createElement('tr');
-                red.innerHTML = `
-                    <td>${index + 1}.</td>
-                    <td>${dijete.ime} ${dijete.prezime}</td>
-                    <td><input type="checkbox" ${dijete.fotografiranje ? 'checked' : ''} onchange="togglePrivola(${index}, 'fotografiranje')"></td>
-                    <td><input type="checkbox" ${dijete.izleti ? 'checked' : ''} onchange="togglePrivola(${index}, 'izleti')"></td>
-                    <td><input type="checkbox" ${dijete.web ? 'checked' : ''} onchange="togglePrivola(${index}, 'web')"></td>
-                    <td><button class="delete-btn" onclick="obrisiPrivolu(${index})">✕</button></td>
-                `;
-                tbody.appendChild(red);
-            });
-        }
-
         // Enter tipka za brže dodavanje
         document.getElementById('ime').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -806,18 +753,6 @@
         document.getElementById('prezime').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 dodajDijete();
-            }
-        });
-
-        document.getElementById('ime-privola').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('prezime-privola').focus();
-            }
-        });
-
-        document.getElementById('prezime-privola').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                dodajPrivolu();
             }
         });
     </script>
