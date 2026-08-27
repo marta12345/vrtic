@@ -236,8 +236,8 @@
                 return;
             }
 
-            if (djeca.length >= 25) {
-                alert('Maksimalan broj djece (25) je dosegnut.');
+            if (djeca.length >= 30) {
+                alert('Maksimalan broj djece (30) je dosegnut.');
                 return;
             }
 
@@ -269,7 +269,7 @@
             }
 
             poruka.style.display = 'none';
-            brojDjece.textContent = `Ukupno djece: ${djeca.length}/25`;
+            brojDjece.textContent = `Ukupno djece: ${djeca.length}/30`;
 
             djeca.forEach((dijete, index) => {
                 const red = document.createElement('tr');
