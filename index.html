@@ -58,10 +58,6 @@
             transform: translateY(0);
         }
 
-        .app-content {
-            display: none;
-        }
-
         .input-section {
             background: white;
             border-radius: 12px;
@@ -211,6 +207,34 @@
         .delete-btn:hover {
             background: #ff6b81;
         }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.9);
+            color: #ff4757;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+            background: #ff4757;
+            color: white;
+        }
+
+        .app-content {
+            display: none;
+            position: relative;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +248,7 @@
         </div>
 
         <div class="app-content" id="app-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
             <h1>📋 Evidencija ubrusa / mokrih maramica</h1>
 
             <div class="input-section">
@@ -264,6 +289,7 @@
         </div>
 
         <div class="app-content" id="privole-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
             <h1>📝 Privole</h1>
 
             <div class="input-section">
@@ -319,6 +345,13 @@
             document.getElementById('ime-privola').focus();
         }
 
+        function zatvori() {
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('privole-content').style.display = 'none';
+            sakrijeCustomTablice();
+            document.getElementById('start-section').style.display = 'block';
+        }
+
         function sakrijeCustomTablice() {
             customTablice.forEach(t => {
                 document.getElementById(`custom-${t.id}`).style.display = 'none';
@@ -351,6 +384,7 @@
             div.className = 'app-content';
             div.id = `custom-${id}`;
             div.innerHTML = `
+                <button class="close-btn" onclick="zatvori()">✕</button>
                 <h1>📋 ${naziv.trim()}</h1>
                 <div class="input-section">
                     <label>Ime:</label>
