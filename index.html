@@ -220,6 +220,7 @@
         <div class="start-section" id="start-section">
             <button class="start-btn" onclick="pokreniAplikaciju()">Evidencija ubrusa / mokrih maramica</button>
             <button class="start-btn" onclick="pokreniPrivole()" style="margin-top: 15px;">Privole</button>
+            <button class="start-btn" onclick="dodajNovuTablicu()" style="margin-top: 15px;">+ Dodaj novu tablicu</button>
         </div>
 
         <div class="app-content" id="app-content">
@@ -292,16 +293,21 @@
                 <p class="child-count" id="broj-djece-privole"></p>
             </div>
         </div>
+
+        <div id="custom-tablice-container"></div>
     </div>
 
     <script>
         let djeca = [];
         let privole = [];
+        let customTablice = [];
+        let customBrojac = 0;
 
         function pokreniAplikaciju() {
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
             document.getElementById('privole-content').style.display = 'none';
+            sakrijeCustomTablice();
             document.getElementById('ime').focus();
         }
 
@@ -309,7 +315,166 @@
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('privole-content').style.display = 'block';
+            sakrijeCustomTablice();
             document.getElementById('ime-privola').focus();
+        }
+
+        function sakrijeCustomTablice() {
+            customTablice.forEach(t => {
+                document.getElementById(`custom-${t.id}`).style.display = 'none';
+            });
+        }
+
+        function dodajNovuTablicu() {
+            const naziv = prompt('Unesite naziv nove tablice:');
+            if (!naziv || !naziv.trim()) return;
+
+            customBrojac++;
+            const id = customBrojac;
+            const tablica = { id: id, naziv: naziv.trim(), djeca: [] };
+            customTablice.push(tablica);
+
+            // Dodaj gumb na početni ekran
+            const startSection = document.getElementById('start-section');
+            const noviGumb = document.createElement('button');
+            noviGumb.className = 'start-btn';
+            noviGumb.style.marginTop = '15px';
+            noviGumb.textContent = naziv.trim();
+            noviGumb.onclick = function() { pokreniCustomTablicu(id); };
+            // Ubaci prije gumba "+ Dodaj novu tablicu"
+            const dodajGumb = startSection.lastElementChild;
+            startSection.insertBefore(noviGumb, dodajGumb);
+
+            // Kreiraj HTML za novu tablicu
+            const container = document.getElementById('custom-tablice-container');
+            const div = document.createElement('div');
+            div.className = 'app-content';
+            div.id = `custom-${id}`;
+            div.innerHTML = `
+                <h1>📋 ${naziv.trim()}</h1>
+                <div class="input-section">
+                    <label>Ime:</label>
+                    <input type="text" id="ime-custom-${id}" placeholder="Unesite ime">
+                    <label>Prezime:</label>
+                    <input type="text" id="prezime-custom-${id}" placeholder="Unesite prezime">
+                    <button onclick="dodajDijeteCustom(${id})">Dodaj dijete</button>
+                </div>
+                <div class="table-section">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th>Ime i prezime</th>
+                                <th>IX</th>
+                                <th>X</th>
+                                <th>XI</th>
+                                <th>XII</th>
+                                <th>I</th>
+                                <th>II</th>
+                                <th>III</th>
+                                <th>IV</th>
+                                <th>V</th>
+                                <th>VI</th>
+                                <th>VII</th>
+                                <th>VIII</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tijelo-custom-${id}">
+                        </tbody>
+                    </table>
+                    <p class="empty-message" id="prazna-custom-${id}">Još nema upisane djece. Dodajte dijete koristeći formu iznad.</p>
+                    <p class="child-count" id="broj-custom-${id}"></p>
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Dodaj Enter event listenere
+            document.getElementById(`ime-custom-${id}`).addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') document.getElementById(`prezime-custom-${id}`).focus();
+            });
+            document.getElementById(`prezime-custom-${id}`).addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') dodajDijeteCustom(id);
+            });
+        }
+
+        function pokreniCustomTablicu(id) {
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('privole-content').style.display = 'none';
+            sakrijeCustomTablice();
+            document.getElementById(`custom-${id}`).style.display = 'block';
+            document.getElementById(`ime-custom-${id}`).focus();
+        }
+
+        function dodajDijeteCustom(id) {
+            const ime = document.getElementById(`ime-custom-${id}`).value.trim();
+            const prezime = document.getElementById(`prezime-custom-${id}`).value.trim();
+
+            if (!ime || !prezime) {
+                alert('Molimo unesite ime i prezime djeteta.');
+                return;
+            }
+
+            const tablica = customTablice.find(t => t.id === id);
+            if (tablica.djeca.length >= 30) {
+                alert('Maksimalan broj djece (30) je dosegnut.');
+                return;
+            }
+
+            tablica.djeca.push({ ime: ime, prezime: prezime });
+
+            document.getElementById(`ime-custom-${id}`).value = '';
+            document.getElementById(`prezime-custom-${id}`).value = '';
+            document.getElementById(`ime-custom-${id}`).focus();
+
+            prikaziCustomTablicu(id);
+        }
+
+        function obrisiDijeteCustom(id, index) {
+            const tablica = customTablice.find(t => t.id === id);
+            tablica.djeca.splice(index, 1);
+            prikaziCustomTablicu(id);
+        }
+
+        function prikaziCustomTablicu(id) {
+            const tablica = customTablice.find(t => t.id === id);
+            const tbody = document.getElementById(`tijelo-custom-${id}`);
+            const poruka = document.getElementById(`prazna-custom-${id}`);
+            const brojDjece = document.getElementById(`broj-custom-${id}`);
+
+            tbody.innerHTML = '';
+
+            if (tablica.djeca.length === 0) {
+                poruka.style.display = 'block';
+                brojDjece.textContent = '';
+                return;
+            }
+
+            poruka.style.display = 'none';
+            brojDjece.textContent = `Ukupno djece: ${tablica.djeca.length}/30`;
+
+            tablica.djeca.forEach((dijete, index) => {
+                const red = document.createElement('tr');
+                red.innerHTML = `
+                    <td>${index + 1}.</td>
+                    <td>${dijete.ime} ${dijete.prezime}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td><button class="delete-btn" onclick="obrisiDijeteCustom(${id}, ${index})">✕</button></td>
+                `;
+                tbody.appendChild(red);
+            });
         }
 
         function dodajDijete() {
