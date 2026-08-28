@@ -166,6 +166,7 @@
             <button class="start-btn" onclick="otvori('tablica')">📋 Privola - tablica</button>
             <button class="start-btn" onclick="otvori('tekst')">📄 Privola - tekst</button>
             <button class="start-btn" onclick="otvori('ubrusi')">🧻 Evidencija ubrusa / mokrih maramica</button>
+            <button class="start-btn" onclick="otvori('sastanci')">👪 Evidencija roditeljskih sastanaka</button>
         </div>
 
         <!-- Privola - tablica -->
@@ -259,6 +260,27 @@
             </div>
             <p class="podnaslov" id="ubrusi-prazno" style="margin-top:20px;">Još nema upisane djece.</p>
         </div>
+
+        <!-- Evidencija roditeljskih sastanaka -->
+        <div class="content" id="sastanci-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h2>👪 Evidencija roditeljskih sastanaka</h2>
+            <p class="podnaslov">Tablica prisutnosti koju je poslala odgajateljica — potpišite se pored imena djeteta</p>
+
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">Br.</th>
+                            <th>Ime i prezime djeteta</th>
+                            <th style="width:40%;">Potpis roditelja</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sastanci-body"></tbody>
+                </table>
+            </div>
+            <button class="submit-btn" onclick="alert('✅ Potpisi spremljeni / poslani odgajateljici.')">📤 Pošalji</button>
+        </div>
     </div>
 
     <script>
@@ -285,9 +307,12 @@
             } else if (tip === 'tekst') {
                 document.getElementById('tekst-content').style.display = 'block';
                 popuniListuDjece();
-            } else {
+            } else if (tip === 'ubrusi') {
                 document.getElementById('ubrusi-content').style.display = 'block';
                 prikaziUbruse();
+            } else {
+                document.getElementById('sastanci-content').style.display = 'block';
+                prikaziSastanke();
             }
         }
 
@@ -295,7 +320,19 @@
             document.getElementById('tablica-content').style.display = 'none';
             document.getElementById('tekst-content').style.display = 'none';
             document.getElementById('ubrusi-content').style.display = 'none';
+            document.getElementById('sastanci-content').style.display = 'none';
             document.getElementById('start-section').style.display = 'block';
+        }
+
+        function prikaziSastanke() {
+            const tbody = document.getElementById('sastanci-body');
+            tbody.innerHTML = djeca.map((d, i) => `
+                <tr>
+                    <td style="font-weight:600; color:#666;">${i + 1}.</td>
+                    <td style="text-transform:uppercase; font-weight:500;">${d}</td>
+                    <td></td>
+                </tr>
+            `).join('');
         }
 
         function dodajUbrusDijete() {
