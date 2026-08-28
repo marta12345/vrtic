@@ -528,15 +528,52 @@
                 sadrzaj.innerHTML = '<p style="color:#999; padding:20px; text-align:center;">Nema upisane djece u vašoj grupi.</p>';
                 return;
             }
-            let redovi = djeca.map((d, i) => `<tr><td style="padding:10px; border-bottom:1px solid #eee; text-align:center; font-weight:600; color:#666;">${i+1}.</td><td style="padding:10px; border-bottom:1px solid #eee; text-transform:uppercase; font-weight:500;">${d}</td></tr>`).join('');
+
+            const danas = new Date();
+            const danasDan = danas.getDate();
+            const danasMjesec = danas.getMonth() + 1;
+
+            let redovi = djeca.map((d, i) => {
+                const rodjendan = rodjendani[d] || '';
+                let rodjendanCell = rodjendan || '—';
+                let stil = '';
+                // Provjeri je li rođendan danas
+                if (rodjendan) {
+                    const [dan, mjesec] = rodjendan.split('.').map(x => parseInt(x, 10));
+                    if (dan === danasDan && mjesec === danasMjesec) {
+                        rodjendanCell = `🎂 ${rodjendan} <strong style="color:#e94560;">DANAS!</strong>`;
+                        stil = 'background:#fff4f6;';
+                    }
+                }
+                return `<tr style="${stil}">
+                    <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; font-weight:600; color:#666;">${i+1}.</td>
+                    <td style="padding:10px; border-bottom:1px solid #eee; text-transform:uppercase; font-weight:500;">${d}</td>
+                    <td style="padding:10px; border-bottom:1px solid #eee;">🎈 ${rodjendanCell}</td>
+                </tr>`;
+            }).join('');
+
             sadrzaj.innerHTML = `
                 <p style="color:#666; margin-bottom:15px;">Vrtić: <strong>${prijavljeniVrtic.naziv}</strong> · Broj djece: <strong>${djeca.length}</strong></p>
                 <table style="width:100%; border-collapse:collapse;">
-                    <thead><tr><th style="background:#4facfe; color:white; padding:10px; text-align:left;">Br.</th><th style="background:#4facfe; color:white; padding:10px; text-align:left;">Ime i prezime</th></tr></thead>
+                    <thead><tr>
+                        <th style="background:#4facfe; color:white; padding:10px; text-align:left;">Br.</th>
+                        <th style="background:#4facfe; color:white; padding:10px; text-align:left;">Ime i prezime</th>
+                        <th style="background:#4facfe; color:white; padding:10px; text-align:left;">Rođendan</th>
+                    </tr></thead>
                     <tbody>${redovi}</tbody>
                 </table>
             `;
         }
+
+        // Datumi rođenja djece (dan.mjesec.)
+        const rodjendani = {
+            'Ana Horvat': '15.03.', 'Marko Kovačević': '22.07.', 'Petra Babić': '08.11.',
+            'Ivan Novak': '30.01.', 'Lucija Jurić': '12.05.',
+            'Luka Matić': '03.09.', 'Mia Tomić': '19.06.', 'Filip Perić': '27.12.',
+            'Nina Šimunović': '14.04.', 'Dino Vuković': '05.10.',
+            'Ema Knežević': '21.02.', 'Leo Božić': '09.08.', 'Sara Marić': '17.11.', 'Jakov Pavlović': '25.06.',
+            'Karla Stanić': '02.03.', 'Matej Đurić': '11.09.', 'Iva Kralj': '29.07.'
+        };
 
         function renderEvidencijaDjece() {
             const sadrzaj = document.getElementById('evidencija-djece-sadrzaj');
