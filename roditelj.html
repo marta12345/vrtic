@@ -265,7 +265,13 @@
         // Demo popis djece za privola-tablica
         const djeca = ['Ana Horvat','Marko Kovačević','Petra Babić','Ivan Novak','Lucija Jurić'];
 
-        let ubrusiDjeca = [];
+        // Automatski učitaj djecu iz grupe u evidenciju ubrusa
+        let ubrusiDjeca = djeca.map(puno => {
+            const dijelovi = puno.split(' ');
+            const ime = dijelovi[0];
+            const prezime = dijelovi.slice(1).join(' ');
+            return { ime, prezime, mjeseci: new Array(12).fill('') };
+        });
 
         function otvori(tip) {
             document.getElementById('start-section').style.display = 'none';
