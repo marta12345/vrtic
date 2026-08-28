@@ -462,8 +462,9 @@
         let aktivnaGrupa = null;
         let prikazPrivole = false;
         let prikazDolasci = false;
-        let privolaTip = 'tablica'; // 'tablica' ili 'tekst'
+        let privolaTip = 'tablica'; // 'tablica', 'tekst' ili 'poslane'
         let privolaGrupaId = null;
+        let poslanePrivole = []; // { vrticId, grupa, tip, datum }
         let vrticIdBrojac = 4;
         let grupaIdBrojac = 10;
 
@@ -810,15 +811,21 @@
             let sadrzaj = '';
             if (privolaTip === 'tablica') {
                 sadrzaj = renderPrivolaTablica(grupa, nazivGrupe);
-            } else {
+            } else if (privolaTip === 'tekst') {
                 sadrzaj = renderPrivolaTekst(nazivGrupe);
+            } else {
+                sadrzaj = renderPoslanePrivole();
             }
 
-            // Grupe tabovi za odabir kojoj grupi se šalje
-            let grupeTabs = '';
-            aktivniVrtic.grupe.forEach(g => {
-                grupeTabs += `<button class="grupa-tab ${privolaGrupaId === g.id ? 'active' : ''}" onclick="odaberiPrivolaGrupu(${g.id})">${g.naziv}</button>`;
-            });
+            // Grupe tabovi za odabir kojoj grupi se šalje (samo za nove privole)
+            let grupeTabsHtml = '';
+            if (privolaTip !== 'poslane') {
+                let grupeTabs = '';
+                aktivniVrtic.grupe.forEach(g => {
+                    grupeTabs += `<button class="grupa-tab ${privolaGrupaId === g.id ? 'active' : ''}" onclick="odaberiPrivolaGrupu(${g.id})">${g.naziv}</button>`;
+                });
+                grupeTabsHtml = `<div class="grupe-tabs">${grupeTabs}</div>`;
+            }
 
             return `
                 <div class="vrtic-title">
@@ -826,12 +833,11 @@
                     <span>Privole — ${aktivniVrtic.naziv}</span>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button class="grupa-tab ${privolaTip === 'tablica' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tablica')">📋 Privola - tablica</button>
-                    <button class="grupa-tab ${privolaTip === 'tekst' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tekst')">📄 Privola - tekst</button>
+                    <button class="grupa-tab ${privolaTip === 'tablica' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tablica')">📋 Nova privola - tablica</button>
+                    <button class="grupa-tab ${privolaTip === 'tekst' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tekst')">📄 Nova privola - tekst</button>
+                    <button class="grupa-tab ${privolaTip === 'poslane' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('poslane')">📬 Sve poslane privole</button>
                 </div>
-                <div class="grupe-tabs">
-                    ${grupeTabs}
-                </div>
+                ${grupeTabsHtml}
                 ${sadrzaj}
             `;
         }
@@ -921,7 +927,64 @@
         }
 
         function salji(nazivGrupe) {
+            const datum = new Date().toLocaleDateString('hr-HR');
+            poslanePrivole.push({
+                vrticId: aktivniVrtic.id,
+                vrtic: aktivniVrtic.naziv,
+                grupa: nazivGrupe,
+                tip: privolaTip === 'tablica' ? 'Tablica' : 'Tekst',
+                datum: datum
+            });
             alert('✅ Privola je poslana u vrtićku grupu ' + nazivGrupe + '!');
+        }
+
+        function renderPoslanePrivole() {
+            const zaOvajVrtic = poslanePrivole.filter(p => p.vrticId === aktivniVrtic.id);
+
+            if (zaOvajVrtic.length === 0) {
+                return `<div class="grupa-content"><div class="empty-state"><div class="icon">📭</div><p>Još nema poslanih privola za ovaj vrtić.</p></div></div>`;
+            }
+
+            let redovi = '';
+            zaOvajVrtic.forEach((p, i) => {
+                redovi += `
+                    <tr>
+                        <td>${i + 1}.</td>
+                        <td style="text-transform: none;">Grupa ${p.grupa}</td>
+                        <td>${p.tip}</td>
+                        <td>${p.datum}</td>
+                        <td><span style="color:#2ed573; font-weight:600;">✓ Poslano</span></td>
+                    </tr>
+                `;
+            });
+
+            return `
+                <div class="grupa-content">
+                    <div class="grupa-info">
+                        <h3>Sve poslane privole — ${aktivniVrtic.naziv}</h3>
+                        <div class="stats">
+                            <div class="stat-box">
+                                <div class="number">${zaOvajVrtic.length}</div>
+                                <div class="label">Poslano</div>
+                            </div>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th style="text-align:left;">Grupa</th>
+                                <th>Tip privole</th>
+                                <th>Datum slanja</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${redovi}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         // Inicijalizacija
