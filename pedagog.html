@@ -252,8 +252,9 @@
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = aktivniVrtic.grupe.find(g => g.id === grupaId);
             if (!dokumentacija[grupaId]) {
-                dokumentacija[grupaId] = { plan: '', opazanja: [], razvoj: {} };
+                dokumentacija[grupaId] = { plan: '', opazanja: [], razvoj: {}, ankete: [] };
             }
+            if (!dokumentacija[grupaId].ankete) dokumentacija[grupaId].ankete = [];
             renderSidebar();
             renderMain();
         }
@@ -270,7 +271,8 @@
             let sadrzaj = '';
             if (aktivniTab === 'plan') sadrzaj = renderPlan();
             else if (aktivniTab === 'opazanja') sadrzaj = renderOpazanja();
-            else sadrzaj = renderRazvoj();
+            else if (aktivniTab === 'razvoj') sadrzaj = renderRazvoj();
+            else sadrzaj = renderAnkete();
 
             main.innerHTML = `
                 <div class="naslov">🎓 ${aktivniVrtic.naziv} — Grupa ${aktivnaGrupa.naziv}</div>
@@ -278,6 +280,7 @@
                     <button class="tab ${aktivniTab === 'plan' ? 'active' : ''}" onclick="postaviTab('plan')">📋 Pedagoški plan</button>
                     <button class="tab ${aktivniTab === 'opazanja' ? 'active' : ''}" onclick="postaviTab('opazanja')">📝 Opažanja</button>
                     <button class="tab ${aktivniTab === 'razvoj' ? 'active' : ''}" onclick="postaviTab('razvoj')">📈 Praćenje razvoja djece</button>
+                    <button class="tab ${aktivniTab === 'ankete' ? 'active' : ''}" onclick="postaviTab('ankete')">📊 Anketa</button>
                 </div>
                 ${sadrzaj}
             `;
@@ -377,6 +380,94 @@
 
         function spremiRazvoj(dijete, vrijednost) {
             dokumentacija[aktivnaGrupa.id].razvoj[dijete] = vrijednost;
+        }
+
+        function renderAnkete() {
+            const lista = dokumentacija[aktivnaGrupa.id].ankete;
+            let redovi = '';
+            if (lista.length === 0) {
+                redovi = `<tr><td colspan="5" class="empty">Nema kreiranih anketa. Kliknite "Napravi anketu".</td></tr>`;
+            } else {
+                lista.forEach((a, i) => {
+                    let statusi = '';
+                    if (a.poslanoRoditeljima) statusi += '<span style="background:#38ef7d; color:#0d5c3f; padding:2px 8px; border-radius:10px; font-size:0.7rem; font-weight:600; margin-right:4px;">✓ Roditeljima</span>';
+                    if (a.poslanoRavnatelju) statusi += '<span style="background:#54a0ff; color:white; padding:2px 8px; border-radius:10px; font-size:0.7rem; font-weight:600;">✓ Ravnatelju</span>';
+                    if (!statusi) statusi = '<span style="color:#999; font-size:0.8rem;">Nije poslana</span>';
+
+                    redovi += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td style="font-weight:600;">${a.naziv}</td>
+                            <td>${a.datum}</td>
+                            <td>${statusi}</td>
+                            <td style="white-space:nowrap;">
+                                <button class="btn" style="padding:5px 10px; font-size:0.75rem; background:#576574;" onclick="linkAnkete(${i})">🔗 Link</button>
+                                <button class="btn" style="padding:5px 10px; font-size:0.75rem;" onclick="posaljiRoditeljima(${i})">📨 Roditeljima</button>
+                                <button class="btn" style="padding:5px 10px; font-size:0.75rem; background:#54a0ff;" onclick="posaljiRavnatelju(${i})">📤 Ravnatelju</button>
+                                <button class="btn btn-del" onclick="obrisiAnketu(${i})">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
+                        <h3 style="color:#11998e;">Ankete — ${aktivnaGrupa.naziv}</h3>
+                        <button class="btn" onclick="napraviAnketu()">+ Napravi anketu</button>
+                    </div>
+                    <table>
+                        <thead><tr><th>Br.</th><th>Naziv ankete</th><th>Datum</th><th>Status</th><th>Akcije</th></tr></thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                    <div class="info-box">💡 Napravite anketu, kopirajte link za dijeljenje, pošaljite roditeljima grupe ili proslijedite ravnatelju.</div>
+                </div>
+            `;
+        }
+
+        function napraviAnketu() {
+            const naziv = prompt('Naziv ankete:', '');
+            if (naziv === null || !naziv.trim()) return;
+            const pitanja = prompt('Pitanja (odvojena zarezom):', 'Zadovoljstvo programom, Prijedlozi za poboljšanje');
+            const id = 'anketa_' + Date.now();
+            dokumentacija[aktivnaGrupa.id].ankete.push({
+                id: id,
+                naziv: naziv.trim(),
+                datum: new Date().toLocaleDateString('hr-HR'),
+                pitanja: (pitanja || '').split(',').map(p => p.trim()).filter(Boolean),
+                poslanoRoditeljima: false,
+                poslanoRavnatelju: false
+            });
+            renderMain();
+        }
+
+        function linkAnkete(i) {
+            const a = dokumentacija[aktivnaGrupa.id].ankete[i];
+            const link = `https://marta12345.github.io/vrtic/anketa.html?id=${a.id}&grupa=${encodeURIComponent(aktivnaGrupa.naziv)}`;
+            prompt('🔗 Link za anketu "' + a.naziv + '" (kopirajte i podijelite):', link);
+        }
+
+        function posaljiRoditeljima(i) {
+            const a = dokumentacija[aktivnaGrupa.id].ankete[i];
+            if (!confirm('Poslati anketu "' + a.naziv + '" roditeljima grupe ' + aktivnaGrupa.naziv + '?')) return;
+            a.poslanoRoditeljima = true;
+            renderMain();
+            alert('✅ Anketa poslana roditeljima grupe ' + aktivnaGrupa.naziv + '.');
+        }
+
+        function posaljiRavnatelju(i) {
+            const a = dokumentacija[aktivnaGrupa.id].ankete[i];
+            if (!confirm('Poslati anketu "' + a.naziv + '" ravnatelju?')) return;
+            a.poslanoRavnatelju = true;
+            renderMain();
+            alert('✅ Anketa poslana ravnatelju.');
+        }
+
+        function obrisiAnketu(i) {
+            if (!confirm('Obrisati anketu?')) return;
+            dokumentacija[aktivnaGrupa.id].ankete.splice(i, 1);
+            renderMain();
         }
 
         renderSidebar();
