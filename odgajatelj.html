@@ -229,6 +229,10 @@
                         <span style="font-size:2rem;">👪</span>
                         <span>Evidencija roditeljskih sastanaka</span>
                     </button>
+                    <button class="menu-btn" onclick="otvoriEkran('plan')">
+                        <span style="font-size:2rem;">📋</span>
+                        <span>Plan rada</span>
+                    </button>
                 </div>
             </div>
 
@@ -293,6 +297,13 @@
                 <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
                 <h2 style="color:#333; margin:15px 0;">👪 Evidencija roditeljskih sastanaka</h2>
                 <div id="sastanci-sadrzaj"></div>
+            </div>
+
+            <!-- Ekran: Plan rada -->
+            <div class="card ekran" id="ekran-plan" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <h2 style="color:#333; margin:15px 0;">📋 Plan rada</h2>
+                <div id="plan-sadrzaj"></div>
             </div>
         </div>
     </div>
@@ -383,7 +394,34 @@
                 renderPrivole();
             } else if (ekran === 'sastanci') {
                 renderSastanci();
+            } else if (ekran === 'plan') {
+                renderPlan();
             }
+        }
+
+        let planTekst = '';
+
+        function renderPlan() {
+            const sadrzaj = document.getElementById('plan-sadrzaj');
+            sadrzaj.innerHTML = `
+                <p style="color:#666; margin-bottom:15px;">Grupa: <strong>${prijavljeni.grupa}</strong> · ${prijavljeniVrtic.naziv}</p>
+                <textarea id="plan-ta" style="width:100%; min-height:320px; padding:15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem; line-height:1.6; font-family:inherit;" placeholder="Upišite plan rada za grupu ${prijavljeni.grupa}...">${planTekst}</textarea>
+                <div style="text-align:right; margin-top:15px;">
+                    <button class="btn" onclick="spremiPlan()">💾 Spremi plan</button>
+                    <button class="btn" style="background:#576574;" onclick="posaljiPlan()">📤 Pošalji ravnatelju</button>
+                </div>
+            `;
+        }
+
+        function spremiPlan() {
+            planTekst = document.getElementById('plan-ta').value;
+            alert('✅ Plan rada spremljen.');
+        }
+
+        function posaljiPlan() {
+            planTekst = document.getElementById('plan-ta').value;
+            if (!planTekst.trim()) { alert('Plan je prazan.'); return; }
+            alert('✅ Plan rada poslan ravnatelju.');
         }
 
         let sastanciLista = [];
