@@ -462,6 +462,8 @@
         let aktivnaGrupa = null;
         let prikazPrivole = false;
         let prikazDolasci = false;
+        let privolaTip = 'tablica'; // 'tablica' ili 'tekst'
+        let privolaGrupaId = null;
         let vrticIdBrojac = 4;
         let grupaIdBrojac = 10;
 
@@ -505,6 +507,7 @@
             aktivnaGrupa = null;
             prikazPrivole = true;
             prikazDolasci = false;
+            privolaGrupaId = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0].id : null;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -797,51 +800,128 @@
         }
 
         function renderPrivole() {
+            // Odaberi default grupu za privole
+            if (!privolaGrupaId && aktivniVrtic.grupe.length > 0) {
+                privolaGrupaId = aktivniVrtic.grupe[0].id;
+            }
+            const grupa = aktivniVrtic.grupe.find(g => g.id === privolaGrupaId);
+            const nazivGrupe = grupa ? grupa.naziv : '—';
+
+            let sadrzaj = '';
+            if (privolaTip === 'tablica') {
+                sadrzaj = renderPrivolaTablica(grupa, nazivGrupe);
+            } else {
+                sadrzaj = renderPrivolaTekst(nazivGrupe);
+            }
+
+            // Grupe tabovi za odabir kojoj grupi se šalje
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                grupeTabs += `<button class="grupa-tab ${privolaGrupaId === g.id ? 'active' : ''}" onclick="odaberiPrivolaGrupu(${g.id})">${g.naziv}</button>`;
+            });
+
             return `
                 <div class="vrtic-title">
                     <span class="icon">📝</span>
                     <span>Privole — ${aktivniVrtic.naziv}</span>
                 </div>
-                <div class="grupa-content" style="line-height: 1.8; font-size: 0.95rem;">
-                    <div style="text-align: center; margin-bottom: 25px;">
-                        <h2 style="margin-bottom: 5px;">SUGLASNOST RODITELJA / SKRBNIKA</h2>
-                        <p style="color: #666;">za sudjelovanje djeteta u aktivnostima vrtića</p>
-                        <p style="color: #666; font-weight: 600;">${aktivniVrtic.naziv}</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="grupa-tab ${privolaTip === 'tablica' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tablica')">📋 Privola - tablica</button>
+                    <button class="grupa-tab ${privolaTip === 'tekst' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tekst')">📄 Privola - tekst</button>
+                </div>
+                <div class="grupe-tabs">
+                    ${grupeTabs}
+                </div>
+                ${sadrzaj}
+            `;
+        }
+
+        function postaviPrivolaTip(tip) {
+            privolaTip = tip;
+            renderMainContent();
+        }
+
+        function odaberiPrivolaGrupu(grupaId) {
+            privolaGrupaId = grupaId;
+            renderMainContent();
+        }
+
+        function renderPrivolaTablica(grupa, nazivGrupe) {
+            let redovi = '';
+            if (grupa && grupa.djeca.length > 0) {
+                grupa.djeca.forEach((d, i) => {
+                    redovi += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td>${d.ime} ${d.prezime}</td>
+                            <td style="height: 45px;"></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                redovi = `<tr><td colspan="3" style="text-align:center; color:#999; padding:20px;">Nema djece u ovoj grupi.</td></tr>`;
+            }
+
+            return `
+                <div class="grupa-content">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 contenteditable="true" style="outline: none; border-bottom: 2px dashed #ddd; display: inline-block; padding: 5px 20px;">PRIVOLA ZA ${nazivGrupe.toUpperCase()}</h2>
+                        <p style="color:#999; font-size:0.8rem; margin-top:5px;">(kliknite na naslov za uređivanje)</p>
                     </div>
-
-                    <p>Ja, <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span> (ime i prezime roditelja/skrbnika),</p>
-
-                    <p style="margin-top: 12px;">roditelj/skrbnik djeteta <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span> (ime i prezime djeteta),</p>
-
-                    <p style="margin-top: 12px;">koje pohađa skupinu <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 200px; display: inline-block;">__________________</span>,</p>
-
-                    <p style="margin-top: 18px;">dajem suglasnost za:</p>
-
-                    <div style="margin: 12px 0 12px 20px;">
-                        <p>☐ Fotografiranje i snimanje djeteta tijekom boravka u vrtiću</p>
-                        <p>☐ Objavu fotografija / videa na web stranici i društvenim mrežama vrtića</p>
-                        <p>☐ Sudjelovanje djeteta na izletima i izvan vrtićkim aktivnostima</p>
-                        <p>☐ Pružanje prve pomoći u slučaju potrebe</p>
-                        <p>☐ Korištenje osobnih podataka djeteta u svrhu evidencije</p>
-                    </div>
-
-                    <p style="margin-top: 20px;">Ova suglasnost vrijedi za pedagošku godinu <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 30px; min-width: 100px; display: inline-block;">____/____</span>.</p>
-
-                    <div style="margin-top: 35px; display: flex; justify-content: space-between;">
-                        <div>
-                            <p>Datum: <span contenteditable="true" style="border-bottom: 1px solid #333; padding: 2px 20px; display: inline-block;">__________</span></p>
-                        </div>
-                        <div>
-                            <p>Potpis roditelja/skrbnika:</p>
-                            <p style="border-bottom: 1px solid #333; width: 200px; margin-top: 30px;"></p>
-                        </div>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 25px;">
-                        <button onclick="window.print()" style="padding: 10px 25px; background: #e94560; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer;">🖨️ Isprintaj</button>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th>Ime i prezime djeteta</th>
+                                <th style="width: 40%;">Potpis roditelja</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${redovi}
+                        </tbody>
+                    </table>
+                    <div style="text-align: right; margin-top: 25px;">
+                        <button onclick="salji('${nazivGrupe}')" style="padding: 12px 25px; background: #2ed573; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;">📤 Šalji u vrtićku grupu ${nazivGrupe}</button>
                     </div>
                 </div>
             `;
+        }
+
+        function renderPrivolaTekst(nazivGrupe) {
+            return `
+                <div class="grupa-content" style="line-height: 1.8; font-size: 0.95rem;">
+                    <div contenteditable="true" style="outline: none; border: 1px dashed #ddd; border-radius: 8px; padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 25px;">
+                            <h2 style="margin-bottom: 5px;">SUGLASNOST RODITELJA / SKRBNIKA</h2>
+                            <p style="color: #666;">za sudjelovanje djeteta u aktivnostima vrtića</p>
+                            <p style="color: #666; font-weight: 600;">${aktivniVrtic.naziv} — grupa ${nazivGrupe}</p>
+                        </div>
+
+                        <p>Poštovani roditelji,</p>
+                        <p style="margin-top: 12px;">molimo Vas da potpisom date suglasnost za sljedeće aktivnosti u kojima će Vaše dijete sudjelovati tijekom pedagoške godine:</p>
+
+                        <div style="margin: 15px 0 15px 20px;">
+                            <p>☐ Fotografiranje i snimanje djeteta tijekom boravka u vrtiću</p>
+                            <p>☐ Objavu fotografija / videa na web stranici i društvenim mrežama vrtića</p>
+                            <p>☐ Sudjelovanje djeteta na izletima i izvan vrtićkim aktivnostima</p>
+                            <p>☐ Pružanje prve pomoći u slučaju potrebe</p>
+                            <p>☐ Korištenje osobnih podataka djeteta u svrhu evidencije</p>
+                        </div>
+
+                        <p style="margin-top: 20px;">Ime i prezime djeteta: _______________________________</p>
+                        <p style="margin-top: 12px;">Potpis roditelja/skrbnika: _______________________________</p>
+                        <p style="margin-top: 12px;">Datum: _______________</p>
+                    </div>
+                    <p style="color:#999; font-size:0.8rem; margin-top:8px; text-align:center;">(kliknite na tekst za uređivanje)</p>
+                    <div style="text-align: right; margin-top: 25px;">
+                        <button onclick="salji('${nazivGrupe}')" style="padding: 12px 25px; background: #2ed573; color: white; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer;">📤 Šalji u vrtićku grupu ${nazivGrupe}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function salji(nazivGrupe) {
+            alert('✅ Privola je poslana u vrtićku grupu ' + nazivGrupe + '!');
         }
 
         // Inicijalizacija
