@@ -138,6 +138,24 @@
             cursor: pointer;
         }
         .submit-btn:hover { background: #26c266; }
+
+        .mjesec-btn {
+            background: #eee;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 30px;
+        }
+        .mjesec-btn.plus { background: #2ed573; color: white; border-color: #2ed573; }
+        .mjesec-btn.minus { background: #ff4757; color: white; border-color: #ff4757; }
+        #ubrusi-tablica { font-size: 0.85rem; }
+        #ubrusi-tablica td { text-align: center; }
+        #ubrusi-tablica td:nth-child(2) { text-align: left; text-transform: uppercase; }
+        .edit-btn { background:#ffa502; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; }
+        .del-btn { background:#ff4757; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer; }
     </style>
 </head>
 <body>
@@ -147,6 +165,7 @@
         <div class="start-section" id="start-section">
             <button class="start-btn" onclick="otvori('tablica')">📋 Privola - tablica</button>
             <button class="start-btn" onclick="otvori('tekst')">📄 Privola - tekst</button>
+            <button class="start-btn" onclick="otvori('ubrusi')">🧻 Evidencija ubrusa / mokrih maramica</button>
         </div>
 
         <!-- Privola - tablica -->
@@ -209,29 +228,123 @@
 
             <button class="submit-btn" onclick="posaljiTekst()">📤 Pošalji</button>
         </div>
+
+        <!-- Evidencija ubrusa / mokrih maramica -->
+        <div class="content" id="ubrusi-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h2>🧻 Evidencija ubrusa / mokrih maramica</h2>
+            <p class="podnaslov">Unesite dijete i označite mjesece (+ / -)</p>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin-bottom:20px;">
+                <input type="text" id="u-ime" placeholder="Ime" style="padding:10px; border:2px solid #ddd; border-radius:8px; width:150px;">
+                <input type="text" id="u-prezime" placeholder="Prezime" style="padding:10px; border:2px solid #ddd; border-radius:8px; width:150px;">
+                <button onclick="dodajUbrusDijete()" style="padding:10px 20px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer;">Dodaj dijete</button>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table id="ubrusi-tablica">
+                    <thead>
+                        <tr>
+                            <th>Br.</th>
+                            <th>Ime i prezime</th>
+                            <th>IX</th><th>X</th><th>XI</th><th>XII</th><th>I</th><th>II</th>
+                            <th>III</th><th>IV</th><th>V</th><th>VI</th><th>VII</th><th>VIII</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="ubrusi-body"></tbody>
+                </table>
+            </div>
+            <p class="podnaslov" id="ubrusi-prazno" style="margin-top:20px;">Još nema upisane djece.</p>
+        </div>
     </div>
 
     <script>
         // Demo popis djece za privola-tablica
         const djeca = ['Ana Horvat','Marko Kovačević','Petra Babić','Ivan Novak','Lucija Jurić'];
 
+        let ubrusiDjeca = [];
+
         function otvori(tip) {
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('tablica-content').style.display = 'none';
             document.getElementById('tekst-content').style.display = 'none';
+            document.getElementById('ubrusi-content').style.display = 'none';
 
             if (tip === 'tablica') {
                 document.getElementById('tablica-content').style.display = 'block';
                 prikaziTablicu();
-            } else {
+            } else if (tip === 'tekst') {
                 document.getElementById('tekst-content').style.display = 'block';
+            } else {
+                document.getElementById('ubrusi-content').style.display = 'block';
+                prikaziUbruse();
             }
         }
 
         function zatvori() {
             document.getElementById('tablica-content').style.display = 'none';
             document.getElementById('tekst-content').style.display = 'none';
+            document.getElementById('ubrusi-content').style.display = 'none';
             document.getElementById('start-section').style.display = 'block';
+        }
+
+        function dodajUbrusDijete() {
+            const ime = document.getElementById('u-ime').value.trim();
+            const prezime = document.getElementById('u-prezime').value.trim();
+            if (!ime || !prezime) { alert('Unesite ime i prezime.'); return; }
+            ubrusiDjeca.push({ ime, prezime, mjeseci: new Array(12).fill('') });
+            document.getElementById('u-ime').value = '';
+            document.getElementById('u-prezime').value = '';
+            document.getElementById('u-ime').focus();
+            prikaziUbruse();
+        }
+
+        function toggleUbrusMjesec(di, mi) {
+            const t = ubrusiDjeca[di].mjeseci[mi];
+            if (t === '') ubrusiDjeca[di].mjeseci[mi] = '+';
+            else if (t === '+') ubrusiDjeca[di].mjeseci[mi] = '-';
+            else ubrusiDjeca[di].mjeseci[mi] = '';
+            prikaziUbruse();
+        }
+
+        function urediUbrus(di) {
+            const ni = prompt('Novo ime:', ubrusiDjeca[di].ime);
+            if (ni === null) return;
+            const np = prompt('Novo prezime:', ubrusiDjeca[di].prezime);
+            if (np === null) return;
+            if (ni.trim() && np.trim()) { ubrusiDjeca[di].ime = ni.trim(); ubrusiDjeca[di].prezime = np.trim(); prikaziUbruse(); }
+        }
+
+        function obrisiUbrus(di) { ubrusiDjeca.splice(di, 1); prikaziUbruse(); }
+
+        function prikaziUbruse() {
+            const tbody = document.getElementById('ubrusi-body');
+            const prazno = document.getElementById('ubrusi-prazno');
+            tbody.innerHTML = '';
+            if (ubrusiDjeca.length === 0) { prazno.style.display = 'block'; return; }
+            prazno.style.display = 'none';
+            ubrusiDjeca.forEach((d, di) => {
+                let mjeseciHtml = '';
+                for (let mi = 0; mi < 12; mi++) {
+                    const val = d.mjeseci[mi];
+                    let klasa = 'mjesec-btn';
+                    if (val === '+') klasa += ' plus';
+                    else if (val === '-') klasa += ' minus';
+                    mjeseciHtml += `<td><button class="${klasa}" onclick="toggleUbrusMjesec(${di}, ${mi})">${val || ''}</button></td>`;
+                }
+                const red = document.createElement('tr');
+                red.innerHTML = `
+                    <td style="font-weight:600; color:#666;">${di + 1}.</td>
+                    <td>${d.ime} ${d.prezime}</td>
+                    ${mjeseciHtml}
+                    <td style="white-space:nowrap;">
+                        <button class="edit-btn" onclick="urediUbrus(${di})">✏️</button>
+                        <button class="del-btn" onclick="obrisiUbrus(${di})">✕</button>
+                    </td>
+                `;
+                tbody.appendChild(red);
+            });
         }
 
         function prikaziTablicu() {
