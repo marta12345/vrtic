@@ -168,6 +168,7 @@
             <button class="start-btn" onclick="otvori('ubrusi')">🧻 Evidencija ubrusa / mokrih maramica</button>
             <button class="start-btn" onclick="otvori('sastanci')">👪 Evidencija roditeljskih sastanaka</button>
             <button class="start-btn" onclick="otvori('fotografije')">🖼️ Pregledaj fotografije</button>
+            <button class="start-btn" onclick="otvori('meni')">🍽️ Tjedni meni</button>
         </div>
 
         <!-- Privola - tablica -->
@@ -283,6 +284,26 @@
             <p class="podnaslov">Fotografije koje su podijelile odgajateljice</p>
             <div id="foto-galerija" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px; margin-top:20px;"></div>
         </div>
+
+        <!-- Tjedni meni -->
+        <div class="content" id="meni-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h2>🍽️ Tjedni jelovnik</h2>
+            <p class="podnaslov" id="meni-tjedan">Jelovnik za tekući tjedan</p>
+            <div style="overflow-x:auto;">
+                <table id="meni-tablica">
+                    <thead>
+                        <tr>
+                            <th style="min-width:100px;">Dan</th>
+                            <th>🥐 Doručak</th>
+                            <th>🍲 Ručak</th>
+                            <th>🍎 Užina</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meni-body"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -315,9 +336,12 @@
             } else if (tip === 'sastanci') {
                 document.getElementById('sastanci-content').style.display = 'block';
                 prikaziSastanke();
-            } else {
+            } else if (tip === 'fotografije') {
                 document.getElementById('fotografije-content').style.display = 'block';
                 prikaziFotografije();
+            } else {
+                document.getElementById('meni-content').style.display = 'block';
+                prikaziMeni();
             }
         }
 
@@ -327,7 +351,28 @@
             document.getElementById('ubrusi-content').style.display = 'none';
             document.getElementById('sastanci-content').style.display = 'none';
             document.getElementById('fotografije-content').style.display = 'none';
+            document.getElementById('meni-content').style.display = 'none';
             document.getElementById('start-section').style.display = 'block';
+        }
+
+        const tjedniMeni = [
+            { dan: 'Ponedjeljak', dorucak: 'Griz na mlijeku, voće', rucak: 'Juha, pileći paprikaš, tjestenina', uzina: 'Jogurt, keksi' },
+            { dan: 'Utorak', dorucak: 'Kruh, maslac, med, čaj', rucak: 'Varivo od povrća s mesom', uzina: 'Voćni kolač' },
+            { dan: 'Srijeda', dorucak: 'Pahuljice s mlijekom', rucak: 'Riblji štapići, krumpir, salata', uzina: 'Banana, mlijeko' },
+            { dan: 'Četvrtak', dorucak: 'Kruh, sirni namaz, čaj', rucak: 'Grah s kobasicom, kruh', uzina: 'Voćni jogurt' },
+            { dan: 'Petak', dorucak: 'Kakao, pecivo', rucak: 'Juha, lazanje, salata', uzina: 'Voće, integralni keksi' }
+        ];
+
+        function prikaziMeni() {
+            const tbody = document.getElementById('meni-body');
+            tbody.innerHTML = tjedniMeni.map(m => `
+                <tr>
+                    <td style="font-weight:600; color:#667eea;">${m.dan}</td>
+                    <td style="text-align:left;">${m.dorucak}</td>
+                    <td style="text-align:left;">${m.rucak}</td>
+                    <td style="text-align:left;">${m.uzina}</td>
+                </tr>
+            `).join('');
         }
 
         function prikaziFotografije() {
