@@ -499,7 +499,11 @@
         let prikazDolasci = false;
         let prikazZaposlenici = false;
         let prikazFotografije = false;
+        let prikazIspricnice = false;
+        let prikazCijepni = false;
         let fotoGrupaId = null;
+        let ispricnice = {}; // { vrticId: [ {src, naziv, dijete, grupa} ] }
+        let cijepni = {};    // { vrticId: [ {src, naziv, dijete, grupa} ] }
         // { vrticId: [ {src, naziv, grupa} ] } - fotografije koje admin prima iz svake grupe
         function demoFoto(boja, tekst) {
             const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='150'><rect width='200' height='150' fill='${boja}'/><text x='100' y='80' font-size='16' fill='white' text-anchor='middle' font-family='sans-serif'>${tekst}</text></svg>`;
@@ -563,7 +567,7 @@
                 vrticRed.appendChild(strelica);
 
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije && !prikazIspricnice && !prikazCijepni ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.style.flex = '1';
                 btn.style.paddingLeft = '5px';
@@ -597,6 +601,18 @@
                     fotoBtn.textContent = '🖼️ Fotografije';
                     fotoBtn.onclick = () => odaberiFotografije(v.id);
                     lista.appendChild(fotoBtn);
+
+                    const ispricniceBtn = document.createElement('button');
+                    ispricniceBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazIspricnice ? ' active' : '');
+                    ispricniceBtn.textContent = '🩺 Liječničke ispričnice';
+                    ispricniceBtn.onclick = () => odaberiIspricnice(v.id);
+                    lista.appendChild(ispricniceBtn);
+
+                    const cijepniBtn = document.createElement('button');
+                    cijepniBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazCijepni ? ' active' : '');
+                    cijepniBtn.textContent = '💉 Cijepni karton';
+                    cijepniBtn.onclick = () => odaberiCijepni(v.id);
+                    lista.appendChild(cijepniBtn);
                 }
             });
         }
@@ -608,6 +624,8 @@
             prikazDolasci = false;
             prikazZaposlenici = false;
             prikazFotografije = false;
+            prikazIspricnice = false;
+            prikazCijepni = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -620,6 +638,8 @@
             prikazDolasci = false;
             prikazZaposlenici = false;
             prikazFotografije = false;
+            prikazIspricnice = false;
+            prikazCijepni = false;
             privolaGrupaId = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0].id : null;
             renderVrticiSidebar();
             renderMainContent();
@@ -633,6 +653,8 @@
             prikazDolasci = true;
             prikazZaposlenici = false;
             prikazFotografije = false;
+            prikazIspricnice = false;
+            prikazCijepni = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -645,6 +667,8 @@
             prikazDolasci = false;
             prikazZaposlenici = true;
             prikazFotografije = false;
+            prikazIspricnice = false;
+            prikazCijepni = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -657,6 +681,28 @@
             prikazDolasci = false;
             prikazZaposlenici = false;
             prikazFotografije = true;
+            prikazIspricnice = false;
+            prikazCijepni = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiIspricnice(vrticId) {
+            otvoreniVrtici[vrticId] = true;
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
+            prikazFotografije = false; prikazIspricnice = true; prikazCijepni = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiCijepni(vrticId) {
+            otvoreniVrtici[vrticId] = true;
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
+            prikazFotografije = false; prikazIspricnice = false; prikazCijepni = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -690,6 +736,16 @@
 
             if (prikazFotografije) {
                 main.innerHTML = renderFotografije();
+                return;
+            }
+
+            if (prikazIspricnice) {
+                main.innerHTML = renderDokumenti('ispricnice');
+                return;
+            }
+
+            if (prikazCijepni) {
+                main.innerHTML = renderDokumenti('cijepni');
                 return;
             }
 
@@ -945,6 +1001,89 @@
             if (trenutno === '') dijete.dolasci[danIndex] = '+';
             else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
             else dijete.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function renderDokumenti(vrsta) {
+            const naslovi = { ispricnice: '🩺 Liječničke ispričnice', cijepni: '💉 Cijepni karton' };
+            const spremiste = vrsta === 'ispricnice' ? ispricnice : cijepni;
+            const dokumenti = spremiste[aktivniVrtic.id] || [];
+
+            let redovi = '';
+            if (dokumenti.length === 0) {
+                redovi = `<tr><td colspan="5" style="text-align:center; color:#999; padding:30px;">Nema učitanih dokumenata.</td></tr>`;
+            } else {
+                dokumenti.forEach((d, i) => {
+                    const pregled = d.src.startsWith('data:image')
+                        ? `<a href="${d.src}" target="_blank"><img src="${d.src}" style="height:40px; border-radius:4px;"></a>`
+                        : `<a href="${d.src}" target="_blank" style="color:#667eea;">📄 Otvori</a>`;
+                    redovi += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td style="text-transform:none; text-align:left;">${d.dijete || '—'}</td>
+                            <td style="text-transform:none; text-align:left;">${d.naziv}</td>
+                            <td>${pregled}</td>
+                            <td><button class="btn-small btn-delete" onclick="obrisiDokument('${vrsta}', ${i})">✕</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            return `
+                <div class="vrtic-title">
+                    <span class="icon">${vrsta === 'ispricnice' ? '🩺' : '💉'}</span>
+                    <span>${naslovi[vrsta]} — ${aktivniVrtic.naziv}</span>
+                </div>
+                <div class="grupa-content">
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap; margin-bottom:20px;">
+                        <label class="btn-small btn-add" style="padding:12px 20px; font-size:0.95rem; cursor:pointer;">
+                            📤 Učitaj dokument
+                            <input type="file" accept="image/*,.pdf" multiple style="display:none;" onchange="ucitajDokument(event, '${vrsta}')">
+                        </label>
+                        <span style="color:#999; font-size:0.85rem;">Ukupno: ${dokumenti.length}</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th style="text-align:left;">Dijete</th>
+                                <th style="text-align:left;">Naziv dokumenta</th>
+                                <th>Pregled</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function ucitajDokument(event, vrsta) {
+            const datoteke = event.target.files;
+            if (!datoteke || datoteke.length === 0) return;
+            const spremiste = vrsta === 'ispricnice' ? ispricnice : cijepni;
+            if (!spremiste[aktivniVrtic.id]) spremiste[aktivniVrtic.id] = [];
+
+            const dijete = prompt('Za koje dijete je ovaj dokument? (ime i prezime):', '');
+
+            let ucitano = 0;
+            const ukupno = datoteke.length;
+            for (let i = 0; i < ukupno; i++) {
+                const file = datoteke[i];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    spremiste[aktivniVrtic.id].push({ src: e.target.result, naziv: file.name, dijete: (dijete || '').trim() || '—' });
+                    ucitano++;
+                    if (ucitano === ukupno) renderMainContent();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function obrisiDokument(vrsta, index) {
+            if (!confirm('Obrisati dokument?')) return;
+            const spremiste = vrsta === 'ispricnice' ? ispricnice : cijepni;
+            spremiste[aktivniVrtic.id].splice(index, 1);
             renderMainContent();
         }
 
