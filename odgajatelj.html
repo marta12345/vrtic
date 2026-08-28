@@ -148,6 +148,37 @@
             font-weight: 700;
             font-size: 0.75rem;
         }
+
+        .menu-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 25px 15px;
+            background: #f8f9ff;
+            border: 2px solid #e8ecff;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            border-color: #667eea;
+            box-shadow: 0 8px 20px rgba(102,126,234,0.2);
+        }
+
+        .btn-back {
+            background: #999;
+            padding: 8px 18px;
+            font-size: 0.9rem;
+        }
+
+        .btn-back:hover { background: #777; }
     </style>
 </head>
 <body>
@@ -166,6 +197,7 @@
 
         <!-- Nakon prijave -->
         <div id="app" style="display:none;">
+            <!-- Header s profilom -->
             <div class="card">
                 <div class="user-header">
                     <div class="user-info-left">
@@ -179,7 +211,33 @@
                 </div>
             </div>
 
-            <div class="card">
+            <!-- Izbornik s gumbovima -->
+            <div class="card" id="izbornik">
+                <h2 style="color:#333; margin-bottom:20px; text-align:center;">Izbornik</h2>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:15px;">
+                    <button class="menu-btn" onclick="otvoriEkran('radno-vrijeme')">
+                        <span style="font-size:2rem;">⏰</span>
+                        <span>Evidencija radnog vremena</span>
+                    </button>
+                    <button class="menu-btn" onclick="otvoriEkran('grupa')">
+                        <span style="font-size:2rem;">👶</span>
+                        <span>Moja grupa</span>
+                    </button>
+                    <button class="menu-btn" onclick="otvoriEkran('fotografije')">
+                        <span style="font-size:2rem;">🖼️</span>
+                        <span>Fotografije</span>
+                    </button>
+                    <button class="menu-btn" onclick="otvoriEkran('evidencija-djece')">
+                        <span style="font-size:2rem;">📅</span>
+                        <span>Evidencija dolazaka djece</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ekran: Radno vrijeme -->
+            <div class="card ekran" id="ekran-radno-vrijeme" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <h2 style="color:#333; margin:15px 0;">⏰ Evidencija radnog vremena</h2>
                 <label style="color:#666; font-weight:600; margin-right:10px;">Mjesec:</label>
                 <select class="mjesec-select" id="mjesec">
                     <option>Rujan</option><option>Listopad</option><option>Studeni</option><option>Prosinac</option>
@@ -198,15 +256,31 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:15px; margin-bottom:15px;">
-                    <h2 style="color:#333; font-size:1.1rem;">🖼️ Fotografije</h2>
+            <!-- Ekran: Moja grupa -->
+            <div class="card ekran" id="ekran-grupa" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <h2 style="color:#333; margin:15px 0;" id="grupa-naslov">👶 Moja grupa</h2>
+                <div id="grupa-sadrzaj"></div>
+            </div>
+
+            <!-- Ekran: Fotografije -->
+            <div class="card ekran" id="ekran-fotografije" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:15px; margin:15px 0;">
+                    <h2 style="color:#333; font-size:1.2rem;">🖼️ Fotografije</h2>
                     <label class="btn" style="cursor:pointer;">
                         📤 Učitaj fotografije
                         <input type="file" accept="image/*" multiple style="display:none;" onchange="ucitajFotografije(event)">
                     </label>
                 </div>
                 <div id="galerija" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px;"></div>
+            </div>
+
+            <!-- Ekran: Evidencija dolazaka djece -->
+            <div class="card ekran" id="ekran-evidencija-djece" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <h2 style="color:#333; margin:15px 0;">📅 Evidencija dolazaka djece</h2>
+                <div id="evidencija-djece-sadrzaj"></div>
             </div>
         </div>
     </div>
@@ -215,15 +289,15 @@
         // Zajednički podaci (u stvarnoj aplikaciji dolazili bi s poslužitelja)
         const vrtici = [
             { id: 1, naziv: 'DV Sunce', odgajatelji: [
-                { id: 1, ime: 'Marija', prezime: 'Horvat', radnoMjesto: 'Odgojiteljica' },
-                { id: 2, ime: 'Ivana', prezime: 'Kovač', radnoMjesto: 'Odgojiteljica' }
+                { id: 1, ime: 'Marija', prezime: 'Horvat', radnoMjesto: 'Odgojiteljica', grupa: 'Leptirići', djeca: ['Ana Horvat','Marko Kovačević','Petra Babić','Ivan Novak','Lucija Jurić'] },
+                { id: 2, ime: 'Ivana', prezime: 'Kovač', radnoMjesto: 'Odgojiteljica', grupa: 'Bubamare', djeca: ['Luka Matić','Mia Tomić','Filip Perić'] }
             ]},
             { id: 2, naziv: 'DV Radost', odgajatelji: [
-                { id: 3, ime: 'Ana', prezime: 'Marić', radnoMjesto: 'Odgojiteljica' },
-                { id: 4, ime: 'Sanja', prezime: 'Perić', radnoMjesto: 'Odgojiteljica' }
+                { id: 3, ime: 'Ana', prezime: 'Marić', radnoMjesto: 'Odgojiteljica', grupa: 'Medvjedići', djeca: ['Nina Šimunović','Dino Vuković'] },
+                { id: 4, ime: 'Sanja', prezime: 'Perić', radnoMjesto: 'Odgojiteljica', grupa: 'Pčelice', djeca: ['Ema Knežević','Leo Božić','Sara Marić','Jakov Pavlović'] }
             ]},
             { id: 3, naziv: 'DV Cvrčak', odgajatelji: [
-                { id: 5, ime: 'Martina', prezime: 'Stanić', radnoMjesto: 'Odgojiteljica' }
+                { id: 5, ime: 'Martina', prezime: 'Stanić', radnoMjesto: 'Odgojiteljica', grupa: 'Ribice', djeca: ['Karla Stanić','Matej Đurić','Iva Kralj'] }
             ]}
         ];
 
@@ -274,7 +348,7 @@
             } else {
                 // Nova odgajateljica koja nije u popisu - kreiraj privremeni profil
                 const noviId = 'gost_' + ime.toLowerCase() + '_' + prezime.toLowerCase();
-                prijavljeni = { id: noviId, ime: ime, prezime: prezime, radnoMjesto: 'Odgojiteljica' };
+                prijavljeni = { id: noviId, ime: ime, prezime: prezime, radnoMjesto: 'Odgojiteljica', grupa: '—', djeca: [] };
                 prijavljeniVrtic = { naziv: '—' };
             }
 
@@ -285,9 +359,93 @@
             document.getElementById('user-ime').textContent = `${prijavljeni.ime} ${prijavljeni.prezime}`;
             document.getElementById('user-detalji').textContent = `${prijavljeni.radnoMjesto} · ${prijavljeniVrtic.naziv}`;
 
-            document.getElementById('mjesec').addEventListener('change', renderTablica);
-            renderTablica();
-            renderGalerija();
+            // Prikaži izbornik, sakrij ekrane
+            document.getElementById('izbornik').style.display = 'block';
+            document.querySelectorAll('.ekran').forEach(e => e.style.display = 'none');
+        }
+
+        function otvoriEkran(ekran) {
+            document.getElementById('izbornik').style.display = 'none';
+            document.querySelectorAll('.ekran').forEach(e => e.style.display = 'none');
+            document.getElementById('ekran-' + ekran).style.display = 'block';
+
+            if (ekran === 'radno-vrijeme') {
+                const sel = document.getElementById('mjesec');
+                sel.onchange = renderTablica;
+                renderTablica();
+            } else if (ekran === 'fotografije') {
+                renderGalerija();
+            } else if (ekran === 'grupa') {
+                renderGrupa();
+            } else if (ekran === 'evidencija-djece') {
+                renderEvidencijaDjece();
+            }
+        }
+
+        function natrag() {
+            document.querySelectorAll('.ekran').forEach(e => e.style.display = 'none');
+            document.getElementById('izbornik').style.display = 'block';
+        }
+
+        function renderGrupa() {
+            const naslov = document.getElementById('grupa-naslov');
+            const sadrzaj = document.getElementById('grupa-sadrzaj');
+            const grupa = prijavljeni.grupa || '—';
+            naslov.textContent = `👶 Grupa: ${grupa}`;
+
+            const djeca = prijavljeni.djeca || [];
+            if (djeca.length === 0) {
+                sadrzaj.innerHTML = '<p style="color:#999; padding:20px; text-align:center;">Nema upisane djece u vašoj grupi.</p>';
+                return;
+            }
+            let redovi = djeca.map((d, i) => `<tr><td style="padding:10px; border-bottom:1px solid #eee; text-align:center; font-weight:600; color:#666;">${i+1}.</td><td style="padding:10px; border-bottom:1px solid #eee; text-transform:uppercase; font-weight:500;">${d}</td></tr>`).join('');
+            sadrzaj.innerHTML = `
+                <p style="color:#666; margin-bottom:15px;">Vrtić: <strong>${prijavljeniVrtic.naziv}</strong> · Broj djece: <strong>${djeca.length}</strong></p>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr><th style="background:#667eea; color:white; padding:10px; text-align:left;">Br.</th><th style="background:#667eea; color:white; padding:10px; text-align:left;">Ime i prezime</th></tr></thead>
+                    <tbody>${redovi}</tbody>
+                </table>
+            `;
+        }
+
+        function renderEvidencijaDjece() {
+            const sadrzaj = document.getElementById('evidencija-djece-sadrzaj');
+            const djeca = prijavljeni.djeca || [];
+            const grupa = prijavljeni.grupa || '—';
+
+            if (djeca.length === 0) {
+                sadrzaj.innerHTML = '<p style="color:#999; padding:20px; text-align:center;">Nema djece u vašoj grupi.</p>';
+                return;
+            }
+
+            let daniHeader = '';
+            for (let d = 1; d <= 31; d++) daniHeader += `<th style="min-width:30px;">${d}</th>`;
+
+            let redovi = '';
+            djeca.forEach((d, i) => {
+                let daniCells = '';
+                for (let dan = 0; dan < 31; dan++) {
+                    daniCells += `<td><span class="vrijeme-cell prazno" style="min-width:24px;" onclick="toggleDijeteDolazak(this)">·</span></td>`;
+                }
+                redovi += `<tr><td style="padding:6px; text-align:center; font-weight:600; color:#666;">${i+1}.</td><td style="padding:6px; text-transform:uppercase; font-weight:500; text-align:left;">${d}</td>${daniCells}</tr>`;
+            });
+
+            sadrzaj.innerHTML = `
+                <p style="color:#666; margin-bottom:15px;">Grupa: <strong>${grupa}</strong> · ${prijavljeniVrtic.naziv}</p>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
+                        <thead><tr><th style="background:#667eea; color:white; padding:6px;">Br.</th><th style="background:#667eea; color:white; padding:6px; text-align:left;">Dijete</th>${daniHeader}</tr></thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                </div>
+                <div class="info-box">💡 Klik na dan mijenja: prazno → ✓ (došao) → ✗ (odsutan).</div>
+            `;
+        }
+
+        function toggleDijeteDolazak(el) {
+            if (el.textContent === '·') { el.textContent = '✓'; el.className = 'vrijeme-cell ima'; }
+            else if (el.textContent === '✓') { el.textContent = '✗'; el.className = 'vrijeme-cell odsutan'; }
+            else { el.textContent = '·'; el.className = 'vrijeme-cell prazno'; }
         }
 
         function odjava() {
