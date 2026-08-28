@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vrtićko doba - Roditelj</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .start-section { text-align: center; }
+
+        .start-btn {
+            display: block;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto 15px;
+            padding: 18px 40px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .close-btn:hover { background: #ff6b81; }
+
+        .content h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .content .podnaslov { text-align: center; color: #666; margin-bottom: 25px; }
+
+        .polje { margin-bottom: 18px; }
+        .polje label { display: block; font-weight: 600; color: #333; margin-bottom: 6px; }
+        .polje input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .polje input:focus { outline: none; border-color: #667eea; }
+
+        .kvacice { margin: 20px 0; }
+        .kvacica-red {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .kvacica-red:hover { background: #f8f9ff; }
+        .kvacica-red input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
+        .kvacica-red label { flex: 1; cursor: pointer; color: #444; }
+
+        .potpis-linija {
+            border-bottom: 2px solid #333;
+            min-height: 40px;
+            margin-top: 5px;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+        }
+        tbody td { padding: 10px 8px; border-bottom: 1px solid #eee; }
+        tbody td:last-child { height: 45px; }
+
+        .submit-btn {
+            display: block;
+            margin: 25px 0 0 auto;
+            padding: 12px 30px;
+            background: #2ed573;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .submit-btn:hover { background: #26c266; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👨‍👩‍👧 Vrtićko doba — Roditelj</h1>
+
+        <div class="start-section" id="start-section">
+            <button class="start-btn" onclick="otvori('tablica')">📋 Privola - tablica</button>
+            <button class="start-btn" onclick="otvori('tekst')">📄 Privola - tekst</button>
+        </div>
+
+        <!-- Privola - tablica -->
+        <div class="content" id="tablica-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h2>📋 Privola - tablica</h2>
+            <p class="podnaslov">Popis djece i potpisi roditelja</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:50px;">Br.</th>
+                        <th>Ime i prezime djeteta</th>
+                        <th style="width:40%;">Potpis roditelja</th>
+                    </tr>
+                </thead>
+                <tbody id="tablica-body"></tbody>
+            </table>
+            <button class="submit-btn" onclick="alert('✅ Privola spremljena / poslana.')">📤 Pošalji</button>
+        </div>
+
+        <!-- Privola - tekst -->
+        <div class="content" id="tekst-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h2>📄 Privola - suglasnost roditelja</h2>
+            <p class="podnaslov">Molimo popunite ime djeteta, označite privole i potpišite se</p>
+
+            <div class="polje">
+                <label for="ime-djeteta">Ime i prezime djeteta:</label>
+                <input type="text" id="ime-djeteta" placeholder="Upišite ime i prezime djeteta">
+            </div>
+
+            <div class="kvacice">
+                <p style="font-weight:600; color:#333; margin-bottom:12px;">Dajem suglasnost za:</p>
+                <div class="kvacica-red" onclick="toggleCheck(this)">
+                    <input type="checkbox" id="k1">
+                    <label for="k1">Fotografiranje i snimanje djeteta tijekom boravka u vrtiću</label>
+                </div>
+                <div class="kvacica-red" onclick="toggleCheck(this)">
+                    <input type="checkbox" id="k2">
+                    <label for="k2">Objavu fotografija / videa na web stranici i društvenim mrežama vrtića</label>
+                </div>
+                <div class="kvacica-red" onclick="toggleCheck(this)">
+                    <input type="checkbox" id="k3">
+                    <label for="k3">Sudjelovanje djeteta na izletima i izvanvrtićkim aktivnostima</label>
+                </div>
+                <div class="kvacica-red" onclick="toggleCheck(this)">
+                    <input type="checkbox" id="k4">
+                    <label for="k4">Pružanje prve pomoći u slučaju potrebe</label>
+                </div>
+                <div class="kvacica-red" onclick="toggleCheck(this)">
+                    <input type="checkbox" id="k5">
+                    <label for="k5">Korištenje osobnih podataka djeteta u svrhu evidencije</label>
+                </div>
+            </div>
+
+            <div class="polje">
+                <label>Potpis roditelja / skrbnika:</label>
+                <div class="potpis-linija"></div>
+            </div>
+
+            <button class="submit-btn" onclick="posaljiTekst()">📤 Pošalji</button>
+        </div>
+    </div>
+
+    <script>
+        // Demo popis djece za privola-tablica
+        const djeca = ['Ana Horvat','Marko Kovačević','Petra Babić','Ivan Novak','Lucija Jurić'];
+
+        function otvori(tip) {
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('tablica-content').style.display = 'none';
+            document.getElementById('tekst-content').style.display = 'none';
+
+            if (tip === 'tablica') {
+                document.getElementById('tablica-content').style.display = 'block';
+                prikaziTablicu();
+            } else {
+                document.getElementById('tekst-content').style.display = 'block';
+            }
+        }
+
+        function zatvori() {
+            document.getElementById('tablica-content').style.display = 'none';
+            document.getElementById('tekst-content').style.display = 'none';
+            document.getElementById('start-section').style.display = 'block';
+        }
+
+        function prikaziTablicu() {
+            const tbody = document.getElementById('tablica-body');
+            tbody.innerHTML = djeca.map((d, i) => `
+                <tr>
+                    <td style="font-weight:600; color:#666;">${i + 1}.</td>
+                    <td style="text-transform:uppercase; font-weight:500;">${d}</td>
+                    <td></td>
+                </tr>
+            `).join('');
+        }
+
+        function toggleCheck(red) {
+            // Ako je kliknuto na sam checkbox, ne diramo (default ponašanje)
+            if (event.target.tagName === 'INPUT') return;
+            const cb = red.querySelector('input[type="checkbox"]');
+            cb.checked = !cb.checked;
+        }
+
+        function posaljiTekst() {
+            const ime = document.getElementById('ime-djeteta').value.trim();
+            if (!ime) { alert('Molimo upišite ime djeteta.'); return; }
+            const odabrano = [];
+            document.querySelectorAll('.kvacice input[type="checkbox"]').forEach((cb, i) => {
+                if (cb.checked) odabrano.push(i + 1);
+            });
+            alert('✅ Privola za dijete "' + ime + '" poslana.\nOznačene privole: ' + (odabrano.length ? odabrano.join(', ') : 'nijedna'));
+        }
+    </script>
+</body>
+</html>
