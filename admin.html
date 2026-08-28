@@ -433,6 +433,12 @@
             {
                 id: 1,
                 naziv: 'DV Sunce',
+                zaposlenici: [
+                    { ime: 'Marija', prezime: 'Horvat', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Ivana', prezime: 'Kovač', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Petra', prezime: 'Novak', radnoMjesto: 'Ravnateljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Josip', prezime: 'Barić', radnoMjesto: 'Domar', dolasci: new Array(31).fill('') }
+                ],
                 grupe: [
                     { id: 1, naziv: 'Leptirići', djeca: [
                         { ime: 'Ana', prezime: 'Horvat', mjeseci: ['+','+','+','','+','+','','','','','',''] },
@@ -452,6 +458,11 @@
             {
                 id: 2,
                 naziv: 'DV Radost',
+                zaposlenici: [
+                    { ime: 'Ana', prezime: 'Marić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Sanja', prezime: 'Perić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Katarina', prezime: 'Jurić', radnoMjesto: 'Ravnateljica', dolasci: new Array(31).fill('') }
+                ],
                 grupe: [
                     { id: 1, naziv: 'Medvjedići', djeca: [
                         { ime: 'Nina', prezime: 'Šimunović', mjeseci: ['+','+','+','+','+','+','','','','','',''] },
@@ -468,6 +479,10 @@
             {
                 id: 3,
                 naziv: 'DV Cvrčak',
+                zaposlenici: [
+                    { ime: 'Martina', prezime: 'Stanić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
+                    { ime: 'Dario', prezime: 'Kralj', radnoMjesto: 'Ravnatelj', dolasci: new Array(31).fill('') }
+                ],
                 grupe: [
                     { id: 1, naziv: 'Ribice', djeca: [
                         { ime: 'Karla', prezime: 'Stanić', mjeseci: ['+','+','+','+','+','+','','','','','',''] },
@@ -482,6 +497,7 @@
         let aktivnaGrupa = null;
         let prikazPrivole = false;
         let prikazDolasci = false;
+        let prikazZaposlenici = false;
         let privolaTip = 'tablica'; // 'tablica', 'tekst' ili 'poslane'
         let privolaGrupaId = null;
         let poslanePrivole = []; // { vrticId, grupa, tip, datum }
@@ -493,7 +509,7 @@
             lista.innerHTML = '';
             vrtici.forEach(v => {
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.onclick = () => odaberiVrtic(v.id);
                 lista.appendChild(btn);
@@ -505,12 +521,19 @@
                 privolaBtn.onclick = () => odaberiPrivole(v.id);
                 lista.appendChild(privolaBtn);
 
-                // Evidencija dolazaka kartica
+                // Evidencija dolazaka djece kartica
                 const dolasciBtn = document.createElement('button');
                 dolasciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazDolasci ? ' active' : '');
-                dolasciBtn.textContent = '📅 Evidencija dolazaka';
+                dolasciBtn.textContent = '📅 Evidencija dolazaka djece';
                 dolasciBtn.onclick = () => odaberiDolazke(v.id);
                 lista.appendChild(dolasciBtn);
+
+                // Evidencija dolazaka zaposlenika kartica
+                const zaposleniciBtn = document.createElement('button');
+                zaposleniciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazZaposlenici ? ' active' : '');
+                zaposleniciBtn.textContent = '🧑‍🏫 Evidencija dolazaka zaposlenika';
+                zaposleniciBtn.onclick = () => odaberiZaposlenike(v.id);
+                lista.appendChild(zaposleniciBtn);
             });
         }
 
@@ -519,6 +542,7 @@
             aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
             prikazPrivole = false;
             prikazDolasci = false;
+            prikazZaposlenici = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -528,6 +552,7 @@
             aktivnaGrupa = null;
             prikazPrivole = true;
             prikazDolasci = false;
+            prikazZaposlenici = false;
             privolaGrupaId = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0].id : null;
             renderVrticiSidebar();
             renderMainContent();
@@ -538,6 +563,17 @@
             aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
             prikazPrivole = false;
             prikazDolasci = true;
+            prikazZaposlenici = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiZaposlenike(vrticId) {
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            prikazPrivole = false;
+            prikazDolasci = false;
+            prikazZaposlenici = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -561,6 +597,11 @@
 
             if (prikazDolasci) {
                 main.innerHTML = renderDolasci();
+                return;
+            }
+
+            if (prikazZaposlenici) {
+                main.innerHTML = renderZaposlenici();
                 return;
             }
 
@@ -817,6 +858,108 @@
             if (trenutno === '') dijete.dolasci[danIndex] = '+';
             else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
             else dijete.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function renderZaposlenici() {
+            const zaposlenici = aktivniVrtic.zaposlenici || [];
+
+            let content = `
+                <div class="vrtic-title">
+                    <span class="icon">🧑‍🏫</span>
+                    <span>Evidencija dolazaka zaposlenika — ${aktivniVrtic.naziv}</span>
+                </div>
+            `;
+
+            if (zaposlenici.length === 0) {
+                content += `<div class="grupa-content"><div class="empty-state"><div class="icon">🧑‍🏫</div><p>Nema zaposlenika u ovom vrtiću.</p></div></div>`;
+                return content;
+            }
+
+            const dani = [];
+            for (let i = 1; i <= 31; i++) dani.push(i);
+
+            let daniHeader = '';
+            dani.forEach(d => { daniHeader += `<th>${d}</th>`; });
+
+            let tableRows = '';
+            zaposlenici.forEach((z, i) => {
+                let daniCells = '';
+                dani.forEach((dan) => {
+                    const val = z.dolasci ? (z.dolasci[dan - 1] || '') : '';
+                    let klasa = 'mjesec-oznaka';
+                    if (val === '+') klasa += ' plus';
+                    else if (val === '-') klasa += ' minus';
+                    daniCells += `<td><span class="${klasa}" onclick="toggleDolazakZaposlenik(${i}, ${dan - 1})">${val || '·'}</span></td>`;
+                });
+
+                tableRows += `
+                    <tr>
+                        <td>${i + 1}.</td>
+                        <td>${z.ime} ${z.prezime}</td>
+                        <td style="text-transform:none; font-size:0.8rem; color:#666;">${z.radnoMjesto || ''}</td>
+                        ${daniCells}
+                    </tr>
+                `;
+            });
+
+            content += `
+                <div class="grupa-content" style="overflow-x:auto;">
+                    <div class="grupa-info">
+                        <h3>Zaposlenici — Mjesec: <select onchange="renderMainContent()" style="padding:5px; border-radius:4px; border:1px solid #ddd;">
+                            <option>Rujan</option><option>Listopad</option><option>Studeni</option><option>Prosinac</option>
+                            <option>Siječanj</option><option>Veljača</option><option>Ožujak</option><option>Travanj</option>
+                            <option>Svibanj</option><option>Lipanj</option><option>Srpanj</option><option>Kolovoz</option>
+                        </select></h3>
+                        <div class="stats">
+                            <div class="stat-box"><div class="number">${zaposlenici.length}</div><div class="label">Zaposlenika</div></div>
+                        </div>
+                    </div>
+                    <table style="font-size:0.75rem;">
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th style="text-align:left;">Ime i prezime</th>
+                                <th>Radno mjesto</th>
+                                ${daniHeader}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    <div style="margin-top:15px;">
+                        <button class="btn-small btn-add" onclick="dodajZaposlenika()" style="padding:8px 16px;">+ Dodaj zaposlenika</button>
+                    </div>
+                </div>
+            `;
+
+            return content;
+        }
+
+        function toggleDolazakZaposlenik(zapIndex, danIndex) {
+            const z = aktivniVrtic.zaposlenici[zapIndex];
+            if (!z.dolasci) z.dolasci = new Array(31).fill('');
+            const trenutno = z.dolasci[danIndex];
+            if (trenutno === '') z.dolasci[danIndex] = '+';
+            else if (trenutno === '+') z.dolasci[danIndex] = '-';
+            else z.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function dodajZaposlenika() {
+            const ime = prompt('Ime zaposlenika:');
+            if (!ime || !ime.trim()) return;
+            const prezime = prompt('Prezime zaposlenika:');
+            if (!prezime || !prezime.trim()) return;
+            const radnoMjesto = prompt('Radno mjesto:', 'Odgojiteljica');
+            if (!aktivniVrtic.zaposlenici) aktivniVrtic.zaposlenici = [];
+            aktivniVrtic.zaposlenici.push({
+                ime: ime.trim(),
+                prezime: prezime.trim(),
+                radnoMjesto: (radnoMjesto || '').trim(),
+                dolasci: new Array(31).fill('')
+            });
             renderMainContent();
         }
 
