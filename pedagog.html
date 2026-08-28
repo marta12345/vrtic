@@ -272,7 +272,8 @@
             if (aktivniTab === 'plan') sadrzaj = renderPlan();
             else if (aktivniTab === 'opazanja') sadrzaj = renderOpazanja();
             else if (aktivniTab === 'razvoj') sadrzaj = renderRazvoj();
-            else sadrzaj = renderAnkete();
+            else if (aktivniTab === 'ankete') sadrzaj = renderAnkete();
+            else sadrzaj = renderRezultati();
 
             main.innerHTML = `
                 <div class="naslov">🎓 ${aktivniVrtic.naziv} — Grupa ${aktivnaGrupa.naziv}</div>
@@ -281,6 +282,7 @@
                     <button class="tab ${aktivniTab === 'opazanja' ? 'active' : ''}" onclick="postaviTab('opazanja')">📝 Opažanja</button>
                     <button class="tab ${aktivniTab === 'razvoj' ? 'active' : ''}" onclick="postaviTab('razvoj')">📈 Praćenje razvoja djece</button>
                     <button class="tab ${aktivniTab === 'ankete' ? 'active' : ''}" onclick="postaviTab('ankete')">📊 Anketa</button>
+                    <button class="tab ${aktivniTab === 'rezultati' ? 'active' : ''}" onclick="postaviTab('rezultati')">📈 Rezultati ankete</button>
                 </div>
                 ${sadrzaj}
             `;
@@ -468,6 +470,76 @@
             if (!confirm('Obrisati anketu?')) return;
             dokumentacija[aktivnaGrupa.id].ankete.splice(i, 1);
             renderMain();
+        }
+
+        function renderRezultati() {
+            const lista = dokumentacija[aktivnaGrupa.id].ankete;
+            const poslane = lista.filter(a => a.poslanoRoditeljima);
+
+            if (poslane.length === 0) {
+                return `<div class="card"><div class="empty"><div class="icon">📈</div><p>Nema anketa poslanih roditeljima. Rezultati se prikazuju nakon što je anketa poslana.</p></div></div>`;
+            }
+
+            let kartice = '';
+            poslane.forEach((a) => {
+                const stvarniIndex = lista.indexOf(a);
+                // Demo rezultati ako još nisu generirani
+                if (!a.rezultati) {
+                    a.rezultati = {
+                        brojOdgovora: Math.floor(Math.random() * 15) + 5,
+                        pitanja: a.pitanja.map(p => ({
+                            pitanje: p,
+                            zadovoljni: Math.floor(Math.random() * 40) + 55,
+                            neutralni: Math.floor(Math.random() * 25) + 10,
+                        }))
+                    };
+                    a.rezultati.pitanja.forEach(r => { r.nezadovoljni = Math.max(0, 100 - r.zadovoljni - r.neutralni); });
+                }
+
+                let pitanjaHtml = '';
+                a.rezultati.pitanja.forEach(r => {
+                    pitanjaHtml += `
+                        <div style="margin-bottom:15px;">
+                            <p style="font-weight:600; margin-bottom:6px;">${r.pitanje}</p>
+                            <div style="display:flex; height:26px; border-radius:6px; overflow:hidden; font-size:0.7rem; color:white; font-weight:600;">
+                                <div style="width:${r.zadovoljni}%; background:#38ef7d; display:flex; align-items:center; justify-content:center;">${r.zadovoljni}%</div>
+                                <div style="width:${r.neutralni}%; background:#feca57; display:flex; align-items:center; justify-content:center;">${r.neutralni}%</div>
+                                <div style="width:${r.nezadovoljni}%; background:#ff6b6b; display:flex; align-items:center; justify-content:center;">${r.nezadovoljni}%</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const statusRavnatelj = a.rezultatiPoslanoRavnatelju
+                    ? '<span style="background:#54a0ff; color:white; padding:3px 10px; border-radius:10px; font-size:0.75rem; font-weight:600;">✓ Rezultati poslani ravnatelju</span>'
+                    : `<button class="btn" style="background:#54a0ff;" onclick="posaljiRezultateRavnatelju(${stvarniIndex})">📤 Pošalji rezultate ravnatelju</button>`;
+
+                kartice += `
+                    <div class="card" style="margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:15px;">
+                            <div>
+                                <h3 style="color:#11998e;">${a.naziv}</h3>
+                                <p style="color:#999; font-size:0.85rem;">${a.datum} · ${a.rezultati.brojOdgovora} odgovora</p>
+                            </div>
+                            ${statusRavnatelj}
+                        </div>
+                        ${pitanjaHtml}
+                        <div style="display:flex; gap:15px; margin-top:10px; font-size:0.75rem; color:#666;">
+                            <span>🟢 Zadovoljni</span><span>🟡 Neutralni</span><span>🔴 Nezadovoljni</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return kartice;
+        }
+
+        function posaljiRezultateRavnatelju(i) {
+            const a = dokumentacija[aktivnaGrupa.id].ankete[i];
+            if (!confirm('Poslati rezultate ankete "' + a.naziv + '" ravnatelju?')) return;
+            a.rezultatiPoslanoRavnatelju = true;
+            renderMain();
+            alert('✅ Rezultati ankete poslani ravnatelju.');
         }
 
         renderSidebar();
