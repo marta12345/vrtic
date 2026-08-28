@@ -891,7 +891,7 @@
             return `
                 <div class="grupa-content">
                     <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 contenteditable="true" style="outline: none; border-bottom: 2px dashed #ddd; display: inline-block; padding: 5px 20px;">PRIVOLA ZA ${nazivGrupe.toUpperCase()}</h2>
+                        <h2 id="privola-naslov" contenteditable="true" style="outline: none; border-bottom: 2px dashed #ddd; display: inline-block; padding: 5px 20px;">PRIVOLA ZA ${nazivGrupe.toUpperCase()}</h2>
                         <p style="color:#999; font-size:0.8rem; margin-top:5px;">(kliknite na naslov za uređivanje)</p>
                     </div>
                     <table>
@@ -918,7 +918,7 @@
                 <div class="grupa-content" style="line-height: 1.8; font-size: 0.95rem;">
                     <div contenteditable="true" style="outline: none; border: 1px dashed #ddd; border-radius: 8px; padding: 20px;">
                         <div style="text-align: center; margin-bottom: 25px;">
-                            <h2 style="margin-bottom: 5px;">SUGLASNOST RODITELJA / SKRBNIKA</h2>
+                            <h2 id="privola-naslov" style="margin-bottom: 5px;">SUGLASNOST RODITELJA / SKRBNIKA</h2>
                             <p style="color: #666;">za sudjelovanje djeteta u aktivnostima vrtića</p>
                             <p style="color: #666; font-weight: 600;">${aktivniVrtic.naziv} — grupa ${nazivGrupe}</p>
                         </div>
@@ -947,6 +947,13 @@
         }
 
         function salji(nazivGrupe) {
+            // Dohvati naziv privole iz editabilnog naslova
+            let nazivPrivole = 'Privola';
+            const naslovEl = document.getElementById('privola-naslov');
+            if (naslovEl && naslovEl.textContent.trim()) {
+                nazivPrivole = naslovEl.textContent.trim();
+            }
+
             // Prikaži ekran za potvrdu slanja
             const modal = document.getElementById('potvrda-modal');
             document.getElementById('potvrda-grupa').textContent = nazivGrupe;
@@ -954,6 +961,7 @@
             document.getElementById('potvrda-tip').textContent = privolaTip === 'tablica' ? 'Tablica' : 'Tekst';
             document.getElementById('potvrda-vrtic').textContent = aktivniVrtic.naziv;
             modal.dataset.grupa = nazivGrupe;
+            modal.dataset.nazivPrivole = nazivPrivole;
             modal.style.display = 'flex';
         }
 
@@ -965,6 +973,7 @@
                 vrticId: aktivniVrtic.id,
                 vrtic: aktivniVrtic.naziv,
                 grupa: nazivGrupe,
+                nazivPrivole: modal.dataset.nazivPrivole || 'Privola',
                 tip: privolaTip === 'tablica' ? 'Tablica' : 'Tekst',
                 datumSlanja: datum,
                 datumZaprimanja: null,
@@ -1042,6 +1051,7 @@
                     <tr>
                         <td>${i + 1}.</td>
                         <td style="text-transform: none;">Grupa ${p.grupa}</td>
+                        <td style="text-transform: none;">${p.nazivPrivole || 'Privola'}</td>
                         <td>${p.tip}</td>
                         <td>${p.datumSlanja}</td>
                         <td>${vidiPoslanu}</td>
@@ -1071,6 +1081,7 @@
                             <tr>
                                 <th>Br.</th>
                                 <th style="text-align:left;">Grupa</th>
+                                <th style="text-align:left;">Naziv privole</th>
                                 <th>Tip</th>
                                 <th>Datum slanja</th>
                                 <th>Poslana privola</th>
