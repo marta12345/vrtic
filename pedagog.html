@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vrtićko doba - Pedagog</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .header h1 { color: white; font-size: 1.4rem; }
+
+        .header .badge {
+            background: rgba(255,255,255,0.25);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .layout { display: flex; min-height: calc(100vh - 60px); }
+
+        .sidebar {
+            width: 260px;
+            background: #16453e;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #8fd9c4;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px;
+            margin-bottom: 10px;
+        }
+
+        .vrtic-tab, .grupa-sub {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #ccc;
+            text-align: left;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .vrtic-tab { font-weight: 600; }
+
+        .vrtic-tab:hover, .grupa-sub:hover { background: rgba(255,255,255,0.05); color: white; }
+
+        .grupa-sub {
+            font-size: 0.85rem;
+            padding-left: 40px;
+            color: #a0c9bc;
+        }
+
+        .grupa-sub.active {
+            background: rgba(56, 239, 125, 0.15);
+            color: #38ef7d;
+            border-left-color: #38ef7d;
+            font-weight: 600;
+        }
+
+        .main {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .naslov {
+            font-size: 1.5rem;
+            color: #16453e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab:hover { color: #333; }
+
+        .tab.active {
+            color: #11998e;
+            border-bottom-color: #11998e;
+            font-weight: 600;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+
+        thead th {
+            background: #16453e;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        tbody td { padding: 8px; border-bottom: 1px solid #eee; }
+
+        tbody tr:nth-child(even) { background: #f6fffb; }
+
+        .btn {
+            padding: 10px 18px;
+            background: #11998e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn:hover { background: #0d7a70; }
+
+        .btn-del {
+            background: #ff4757;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 280px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-family: inherit;
+        }
+
+        .empty { text-align: center; padding: 40px; color: #999; }
+        .empty .icon { font-size: 3rem; margin-bottom: 10px; }
+
+        .info-box {
+            background: #e8fff5;
+            border-left: 4px solid #11998e;
+            padding: 12px 15px;
+            border-radius: 6px;
+            color: #555;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎓 Vrtićko doba — Pedagog</h1>
+        <span class="badge">PEDAGOG</span>
+    </div>
+
+    <div class="layout">
+        <div class="sidebar">
+            <h3>Vrtići i grupe</h3>
+            <div id="sidebar-lista"></div>
+        </div>
+        <div class="main" id="main">
+            <div class="empty"><div class="icon">🎓</div><p>Odaberite vrtićku grupu iz izbornika.</p></div>
+        </div>
+    </div>
+
+    <script>
+        // Zajednički podaci
+        const vrtici = [
+            { id: 1, naziv: 'DV Sunce', grupe: [
+                { id: 1, naziv: 'Leptirići', djeca: ['Ana Horvat','Marko Kovačević','Petra Babić','Ivan Novak','Lucija Jurić'] },
+                { id: 2, naziv: 'Bubamare', djeca: ['Luka Matić','Mia Tomić','Filip Perić'] },
+                { id: 3, naziv: 'Zvjezdice', djeca: [] }
+            ]},
+            { id: 2, naziv: 'DV Radost', grupe: [
+                { id: 4, naziv: 'Medvjedići', djeca: ['Nina Šimunović','Dino Vuković'] },
+                { id: 5, naziv: 'Pčelice', djeca: ['Ema Knežević','Leo Božić','Sara Marić','Jakov Pavlović'] }
+            ]},
+            { id: 3, naziv: 'DV Cvrčak', grupe: [
+                { id: 6, naziv: 'Ribice', djeca: ['Karla Stanić','Matej Đurić','Iva Kralj'] }
+            ]}
+        ];
+
+        // Pedagoška dokumentacija: { grupaId: { plan, opazanja: [], razvoj: { dijete: tekst } } }
+        let dokumentacija = {};
+
+        let aktivniVrtic = null;
+        let aktivnaGrupa = null;
+        let aktivniTab = 'plan';
+
+        function renderSidebar() {
+            const lista = document.getElementById('sidebar-lista');
+            lista.innerHTML = '';
+            vrtici.forEach(v => {
+                const vBtn = document.createElement('div');
+                vBtn.className = 'vrtic-tab';
+                vBtn.textContent = '🏫 ' + v.naziv;
+                lista.appendChild(vBtn);
+
+                v.grupe.forEach(g => {
+                    const gBtn = document.createElement('button');
+                    gBtn.className = 'grupa-sub' + (aktivnaGrupa && aktivnaGrupa.id === g.id ? ' active' : '');
+                    gBtn.textContent = '👶 ' + g.naziv + ' (' + g.djeca.length + ')';
+                    gBtn.onclick = () => odaberiGrupu(v.id, g.id);
+                    lista.appendChild(gBtn);
+                });
+            });
+        }
+
+        function odaberiGrupu(vrticId, grupaId) {
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = aktivniVrtic.grupe.find(g => g.id === grupaId);
+            if (!dokumentacija[grupaId]) {
+                dokumentacija[grupaId] = { plan: '', opazanja: [], razvoj: {} };
+            }
+            renderSidebar();
+            renderMain();
+        }
+
+        function postaviTab(tab) { aktivniTab = tab; renderMain(); }
+
+        function renderMain() {
+            const main = document.getElementById('main');
+            if (!aktivnaGrupa) {
+                main.innerHTML = `<div class="empty"><div class="icon">🎓</div><p>Odaberite vrtićku grupu iz izbornika.</p></div>`;
+                return;
+            }
+
+            let sadrzaj = '';
+            if (aktivniTab === 'plan') sadrzaj = renderPlan();
+            else if (aktivniTab === 'opazanja') sadrzaj = renderOpazanja();
+            else sadrzaj = renderRazvoj();
+
+            main.innerHTML = `
+                <div class="naslov">🎓 ${aktivniVrtic.naziv} — Grupa ${aktivnaGrupa.naziv}</div>
+                <div class="tabs">
+                    <button class="tab ${aktivniTab === 'plan' ? 'active' : ''}" onclick="postaviTab('plan')">📋 Pedagoški plan</button>
+                    <button class="tab ${aktivniTab === 'opazanja' ? 'active' : ''}" onclick="postaviTab('opazanja')">📝 Opažanja</button>
+                    <button class="tab ${aktivniTab === 'razvoj' ? 'active' : ''}" onclick="postaviTab('razvoj')">📈 Praćenje razvoja djece</button>
+                </div>
+                ${sadrzaj}
+            `;
+        }
+
+        function renderPlan() {
+            const tekst = dokumentacija[aktivnaGrupa.id].plan || '';
+            return `
+                <div class="card">
+                    <h3 style="color:#11998e; margin-bottom:15px;">Pedagoški plan rada — ${aktivnaGrupa.naziv}</h3>
+                    <textarea id="plan-ta" placeholder="Upišite pedagoški plan rada...">${tekst}</textarea>
+                    <div style="text-align:right; margin-top:15px;">
+                        <button class="btn" onclick="spremiPlan()">💾 Spremi plan</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function spremiPlan() {
+            dokumentacija[aktivnaGrupa.id].plan = document.getElementById('plan-ta').value;
+            alert('✅ Pedagoški plan spremljen.');
+        }
+
+        function renderOpazanja() {
+            const lista = dokumentacija[aktivnaGrupa.id].opazanja;
+            let redovi = '';
+            if (lista.length === 0) {
+                redovi = `<tr><td colspan="4" class="empty">Nema unesenih opažanja.</td></tr>`;
+            } else {
+                lista.forEach((o, i) => {
+                    redovi += `<tr>
+                        <td>${o.datum}</td>
+                        <td>${o.dijete}</td>
+                        <td>${o.tekst}</td>
+                        <td><button class="btn btn-del" onclick="obrisiOpazanje(${i})">✕</button></td>
+                    </tr>`;
+                });
+            }
+            return `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color:#11998e;">Opažanja — ${aktivnaGrupa.naziv}</h3>
+                        <button class="btn" onclick="dodajOpazanje()">+ Novo opažanje</button>
+                    </div>
+                    <table>
+                        <thead><tr><th>Datum</th><th>Dijete</th><th>Opažanje</th><th></th></tr></thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function dodajOpazanje() {
+            const datum = prompt('Datum:', new Date().toLocaleDateString('hr-HR'));
+            if (datum === null) return;
+            const dijete = prompt('Dijete (ime i prezime):', '');
+            if (dijete === null) return;
+            const tekst = prompt('Opažanje:', '');
+            if (tekst === null || !tekst.trim()) return;
+            dokumentacija[aktivnaGrupa.id].opazanja.push({ datum: datum.trim() || '—', dijete: dijete.trim() || '—', tekst: tekst.trim() });
+            renderMain();
+        }
+
+        function obrisiOpazanje(i) {
+            if (!confirm('Obrisati opažanje?')) return;
+            dokumentacija[aktivnaGrupa.id].opazanja.splice(i, 1);
+            renderMain();
+        }
+
+        function renderRazvoj() {
+            const djeca = aktivnaGrupa.djeca;
+            if (djeca.length === 0) {
+                return `<div class="card"><div class="empty"><div class="icon">👶</div><p>Nema djece u ovoj grupi.</p></div></div>`;
+            }
+            const razvoj = dokumentacija[aktivnaGrupa.id].razvoj;
+            let redovi = '';
+            djeca.forEach((d, i) => {
+                const biljeska = razvoj[d] || '';
+                redovi += `
+                    <tr>
+                        <td style="font-weight:600;">${i+1}. ${d}</td>
+                        <td><input type="text" value="${biljeska.replace(/"/g,'&quot;')}" placeholder="Bilješka o razvoju..." style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;" onchange="spremiRazvoj('${d.replace(/'/g,"\\'")}', this.value)"></td>
+                    </tr>
+                `;
+            });
+            return `
+                <div class="card">
+                    <h3 style="color:#11998e; margin-bottom:15px;">Praćenje razvoja djece — ${aktivnaGrupa.naziv}</h3>
+                    <table>
+                        <thead><tr><th style="width:35%;">Dijete</th><th>Bilješka o razvoju</th></tr></thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                    <div class="info-box">💡 Upišite bilješku o razvoju za svako dijete. Sprema se automatski kad izađete iz polja.</div>
+                </div>
+            `;
+        }
+
+        function spremiRazvoj(dijete, vrijednost) {
+            dokumentacija[aktivnaGrupa.id].razvoj[dijete] = vrijednost;
+        }
+
+        renderSidebar();
+    </script>
+</body>
+</html>
