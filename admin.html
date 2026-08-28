@@ -501,6 +501,9 @@
         let prikazFotografije = false;
         let prikazIspricnice = false;
         let prikazCijepni = false;
+        let prikazSastanci = false;
+        let sastanciGrupaId = null;
+        let sastanci = {}; // { vrticId: { grupaNaziv: [ {datum, tema, prisutni, biljeske} ] } }
         let fotoGrupaId = null;
         let ispricnice = {}; // { vrticId: [ {src, naziv, dijete, grupa} ] }
         let cijepni = {};    // { vrticId: [ {src, naziv, dijete, grupa} ] }
@@ -567,7 +570,7 @@
                 vrticRed.appendChild(strelica);
 
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije && !prikazIspricnice && !prikazCijepni ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije && !prikazIspricnice && !prikazCijepni && !prikazSastanci ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.style.flex = '1';
                 btn.style.paddingLeft = '5px';
@@ -613,6 +616,12 @@
                     cijepniBtn.textContent = '💉 Cijepni karton';
                     cijepniBtn.onclick = () => odaberiCijepni(v.id);
                     lista.appendChild(cijepniBtn);
+
+                    const sastanciBtn = document.createElement('button');
+                    sastanciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazSastanci ? ' active' : '');
+                    sastanciBtn.textContent = '👪 Evidencija roditeljskih sastanaka';
+                    sastanciBtn.onclick = () => odaberiSastanke(v.id);
+                    lista.appendChild(sastanciBtn);
                 }
             });
         }
@@ -626,6 +635,7 @@
             prikazFotografije = false;
             prikazIspricnice = false;
             prikazCijepni = false;
+            prikazSastanci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -640,6 +650,7 @@
             prikazFotografije = false;
             prikazIspricnice = false;
             prikazCijepni = false;
+            prikazSastanci = false;
             privolaGrupaId = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0].id : null;
             renderVrticiSidebar();
             renderMainContent();
@@ -655,6 +666,7 @@
             prikazFotografije = false;
             prikazIspricnice = false;
             prikazCijepni = false;
+            prikazSastanci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -669,6 +681,7 @@
             prikazFotografije = false;
             prikazIspricnice = false;
             prikazCijepni = false;
+            prikazSastanci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -683,6 +696,7 @@
             prikazFotografije = true;
             prikazIspricnice = false;
             prikazCijepni = false;
+            prikazSastanci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -693,6 +707,7 @@
             aktivnaGrupa = null;
             prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
             prikazFotografije = false; prikazIspricnice = true; prikazCijepni = false;
+            prikazSastanci = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -703,6 +718,18 @@
             aktivnaGrupa = null;
             prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
             prikazFotografije = false; prikazIspricnice = false; prikazCijepni = true;
+            prikazSastanci = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiSastanke(vrticId) {
+            otvoreniVrtici[vrticId] = true;
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
+            prikazFotografije = false; prikazIspricnice = false; prikazCijepni = false;
+            prikazSastanci = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -746,6 +773,11 @@
 
             if (prikazCijepni) {
                 main.innerHTML = renderDokumenti('cijepni');
+                return;
+            }
+
+            if (prikazSastanci) {
+                main.innerHTML = renderSastanci();
                 return;
             }
 
@@ -1001,6 +1033,109 @@
             if (trenutno === '') dijete.dolasci[danIndex] = '+';
             else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
             else dijete.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function renderSastanci() {
+            if (aktivniVrtic.grupe.length === 0) {
+                return `
+                    <div class="vrtic-title"><span class="icon">👪</span><span>Evidencija roditeljskih sastanaka — ${aktivniVrtic.naziv}</span></div>
+                    <div class="grupa-content"><div class="empty-state"><div class="icon">👪</div><p>Ovaj vrtić nema grupa.</p></div></div>
+                `;
+            }
+
+            if (!sastanciGrupaId || !aktivniVrtic.grupe.find(g => g.id === sastanciGrupaId)) {
+                sastanciGrupaId = aktivniVrtic.grupe[0].id;
+            }
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === sastanciGrupaId);
+
+            if (!sastanci[aktivniVrtic.id]) sastanci[aktivniVrtic.id] = {};
+            const listaSastanaka = sastanci[aktivniVrtic.id][aktGrupa.naziv] || [];
+
+            // Tabovi grupa
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                const broj = (sastanci[aktivniVrtic.id] && sastanci[aktivniVrtic.id][g.naziv]) ? sastanci[aktivniVrtic.id][g.naziv].length : 0;
+                grupeTabs += `<button class="grupa-tab ${sastanciGrupaId === g.id ? 'active' : ''}" onclick="odaberiSastanakGrupu(${g.id})">${g.naziv} (${broj})</button>`;
+            });
+
+            let redovi = '';
+            if (listaSastanaka.length === 0) {
+                redovi = `<tr><td colspan="5" style="text-align:center; color:#999; padding:30px;">Nema evidentiranih sastanaka za grupu ${aktGrupa.naziv}.</td></tr>`;
+            } else {
+                listaSastanaka.forEach((s, i) => {
+                    redovi += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td>${s.datum}</td>
+                            <td style="text-transform:none; text-align:left;">${s.tema}</td>
+                            <td>${s.prisutni}</td>
+                            <td style="text-transform:none; text-align:left; font-size:0.8rem; color:#666;">${s.biljeske || '—'}</td>
+                            <td><button class="btn-small btn-delete" onclick="obrisiSastanak(${i})">✕</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            return `
+                <div class="vrtic-title">
+                    <span class="icon">👪</span>
+                    <span>Evidencija roditeljskih sastanaka — ${aktivniVrtic.naziv}</span>
+                </div>
+                <div class="grupe-tabs">
+                    ${grupeTabs}
+                </div>
+                <div class="grupa-content">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+                        <h3 style="color:#667eea;">👶 Grupa: ${aktGrupa.naziv} <span style="color:#999; font-weight:400; font-size:0.85rem;">(${listaSastanaka.length} sastanaka)</span></h3>
+                        <button class="btn-small btn-add" style="padding:10px 18px; font-size:0.9rem;" onclick="dodajSastanak()">+ Novi sastanak</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th>Datum</th>
+                                <th style="text-align:left;">Tema</th>
+                                <th>Prisutnih</th>
+                                <th style="text-align:left;">Bilješke</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function odaberiSastanakGrupu(grupaId) {
+            sastanciGrupaId = grupaId;
+            renderMainContent();
+        }
+
+        function dodajSastanak() {
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === sastanciGrupaId);
+            const datum = prompt('Datum sastanka (npr. 15.10.2026.):', new Date().toLocaleDateString('hr-HR'));
+            if (datum === null) return;
+            const tema = prompt('Tema sastanka:', '');
+            if (tema === null || !tema.trim()) return;
+            const prisutni = prompt('Broj prisutnih roditelja:', '');
+            const biljeske = prompt('Bilješke (opcionalno):', '');
+
+            if (!sastanci[aktivniVrtic.id]) sastanci[aktivniVrtic.id] = {};
+            if (!sastanci[aktivniVrtic.id][aktGrupa.naziv]) sastanci[aktivniVrtic.id][aktGrupa.naziv] = [];
+            sastanci[aktivniVrtic.id][aktGrupa.naziv].push({
+                datum: datum.trim() || '—',
+                tema: tema.trim(),
+                prisutni: (prisutni || '').trim() || '0',
+                biljeske: (biljeske || '').trim()
+            });
+            renderMainContent();
+        }
+
+        function obrisiSastanak(index) {
+            if (!confirm('Obrisati sastanak?')) return;
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === sastanciGrupaId);
+            sastanci[aktivniVrtic.id][aktGrupa.naziv].splice(index, 1);
             renderMainContent();
         }
 
