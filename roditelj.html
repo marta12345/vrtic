@@ -190,11 +190,13 @@
         <div class="content" id="tekst-content">
             <button class="close-btn" onclick="zatvori()">✕</button>
             <h2>📄 Privola - suglasnost roditelja</h2>
-            <p class="podnaslov">Molimo popunite ime djeteta, označite privole i potpišite se</p>
+            <p class="podnaslov">Odaberite dijete iz grupe, označite privole i potpišite se</p>
 
             <div class="polje">
                 <label for="ime-djeteta">Ime i prezime djeteta:</label>
-                <input type="text" id="ime-djeteta" placeholder="Upišite ime i prezime djeteta">
+                <select id="ime-djeteta" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1rem;">
+                    <option value="">-- Odaberite dijete iz grupe --</option>
+                </select>
             </div>
 
             <div class="kvacice">
@@ -276,6 +278,7 @@
                 prikaziTablicu();
             } else if (tip === 'tekst') {
                 document.getElementById('tekst-content').style.display = 'block';
+                popuniListuDjece();
             } else {
                 document.getElementById('ubrusi-content').style.display = 'block';
                 prikaziUbruse();
@@ -365,9 +368,20 @@
             cb.checked = !cb.checked;
         }
 
+        function popuniListuDjece() {
+            const sel = document.getElementById('ime-djeteta');
+            sel.innerHTML = '<option value="">-- Odaberite dijete iz grupe --</option>';
+            djeca.forEach(d => {
+                const o = document.createElement('option');
+                o.value = d;
+                o.textContent = d;
+                sel.appendChild(o);
+            });
+        }
+
         function posaljiTekst() {
             const ime = document.getElementById('ime-djeteta').value.trim();
-            if (!ime) { alert('Molimo upišite ime djeteta.'); return; }
+            if (!ime) { alert('Molimo odaberite dijete iz liste.'); return; }
             const odabrano = [];
             document.querySelectorAll('.kvacice input[type="checkbox"]').forEach((cb, i) => {
                 if (cb.checked) odabrano.push(i + 1);
