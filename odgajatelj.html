@@ -201,6 +201,17 @@
                     Možete uređivati <strong>samo svoje</strong> vrijeme dolaska i odlaska.
                 </div>
             </div>
+
+            <div class="card">
+                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:15px; margin-bottom:15px;">
+                    <h2 style="color:#333; font-size:1.1rem;">🖼️ Fotografije</h2>
+                    <label class="btn" style="cursor:pointer;">
+                        📤 Učitaj fotografije
+                        <input type="file" accept="image/*" multiple style="display:none;" onchange="ucitajFotografije(event)">
+                    </label>
+                </div>
+                <div id="galerija" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px;"></div>
+            </div>
         </div>
     </div>
 
@@ -278,6 +289,7 @@
 
             document.getElementById('mjesec').addEventListener('change', renderTablica);
             renderTablica();
+            renderGalerija();
         }
 
         function odjava() {
@@ -344,6 +356,62 @@
             else podaci[polje][danIndex] = formatirajVrijeme(v) || '-';
             spremiPodatkeKorisnika(prijavljeni.id, podaci);
             renderTablica();
+        }
+
+        // Fotografije po korisniku
+        function kljucFotografija(odgId) { return `fotografije_odg_${odgId}`; }
+
+        function ucitajFotoIzMemorije() {
+            const spremljeno = localStorage.getItem(kljucFotografija(prijavljeni.id));
+            return spremljeno ? JSON.parse(spremljeno) : [];
+        }
+
+        function spremiFoto(slike) {
+            localStorage.setItem(kljucFotografija(prijavljeni.id), JSON.stringify(slike));
+        }
+
+        function ucitajFotografije(event) {
+            const datoteke = event.target.files;
+            if (!datoteke || datoteke.length === 0) return;
+            const slike = ucitajFotoIzMemorije();
+
+            let ucitano = 0;
+            const ukupno = datoteke.length;
+            for (let i = 0; i < ukupno; i++) {
+                const file = datoteke[i];
+                if (!file.type.startsWith('image/')) { ucitano++; continue; }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    slike.push({ src: e.target.result, naziv: file.name });
+                    ucitano++;
+                    if (ucitano === ukupno) { spremiFoto(slike); renderGalerija(); }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function obrisiFoto(index) {
+            if (!confirm('Obrisati fotografiju?')) return;
+            const slike = ucitajFotoIzMemorije();
+            slike.splice(index, 1);
+            spremiFoto(slike);
+            renderGalerija();
+        }
+
+        function renderGalerija() {
+            const galerija = document.getElementById('galerija');
+            const slike = ucitajFotoIzMemorije();
+            if (slike.length === 0) {
+                galerija.innerHTML = '<p style="color:#999; grid-column:1/-1; text-align:center; padding:20px;">Još nema učitanih fotografija.</p>';
+                return;
+            }
+            galerija.innerHTML = slike.map((s, i) => `
+                <div style="border:1px solid #eee; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
+                    <img src="${s.src}" style="width:100%; height:130px; object-fit:cover; display:block;">
+                    <div style="padding:8px; font-size:0.75rem; color:#666; text-align:center;">${s.naziv}</div>
+                    <button onclick="obrisiFoto(${i})" style="position:absolute; top:6px; right:6px; background:#ff4757; color:white; border:none; border-radius:50%; width:26px; height:26px; cursor:pointer; font-weight:700;">✕</button>
+                </div>
+            `).join('');
         }
 
         initPrijava();

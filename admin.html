@@ -498,6 +498,8 @@
         let prikazPrivole = false;
         let prikazDolasci = false;
         let prikazZaposlenici = false;
+        let prikazFotografije = false;
+        let fotografije = {}; // { vrticId: [ {src, naziv} ] }
         let odabraniMjesecDjeca = 'Rujan';
         let odabraniMjesecZaposlenici = 'Rujan';
 
@@ -528,7 +530,7 @@
             lista.innerHTML = '';
             vrtici.forEach(v => {
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.onclick = () => odaberiVrtic(v.id);
                 lista.appendChild(btn);
@@ -553,6 +555,13 @@
                 zaposleniciBtn.textContent = '🧑‍🏫 Evidencija dolazaka zaposlenika';
                 zaposleniciBtn.onclick = () => odaberiZaposlenike(v.id);
                 lista.appendChild(zaposleniciBtn);
+
+                // Fotografije kartica
+                const fotoBtn = document.createElement('button');
+                fotoBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazFotografije ? ' active' : '');
+                fotoBtn.textContent = '🖼️ Fotografije';
+                fotoBtn.onclick = () => odaberiFotografije(v.id);
+                lista.appendChild(fotoBtn);
             });
         }
 
@@ -562,6 +571,7 @@
             prikazPrivole = false;
             prikazDolasci = false;
             prikazZaposlenici = false;
+            prikazFotografije = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -572,6 +582,7 @@
             prikazPrivole = true;
             prikazDolasci = false;
             prikazZaposlenici = false;
+            prikazFotografije = false;
             privolaGrupaId = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0].id : null;
             renderVrticiSidebar();
             renderMainContent();
@@ -583,6 +594,7 @@
             prikazPrivole = false;
             prikazDolasci = true;
             prikazZaposlenici = false;
+            prikazFotografije = false;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -593,6 +605,18 @@
             prikazPrivole = false;
             prikazDolasci = false;
             prikazZaposlenici = true;
+            prikazFotografije = false;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiFotografije(vrticId) {
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            prikazPrivole = false;
+            prikazDolasci = false;
+            prikazZaposlenici = false;
+            prikazFotografije = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -621,6 +645,11 @@
 
             if (prikazZaposlenici) {
                 main.innerHTML = renderZaposlenici();
+                return;
+            }
+
+            if (prikazFotografije) {
+                main.innerHTML = renderFotografije();
                 return;
             }
 
@@ -876,6 +905,69 @@
             if (trenutno === '') dijete.dolasci[danIndex] = '+';
             else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
             else dijete.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function renderFotografije() {
+            const slike = fotografije[aktivniVrtic.id] || [];
+
+            let galerija = '';
+            if (slike.length === 0) {
+                galerija = `<div class="empty-state"><div class="icon">🖼️</div><p>Još nema učitanih fotografija za ovaj vrtić.</p></div>`;
+            } else {
+                galerija = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:15px; margin-top:20px;">';
+                slike.forEach((s, i) => {
+                    galerija += `
+                        <div style="border:1px solid #eee; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
+                            <img src="${s.src}" style="width:100%; height:150px; object-fit:cover; display:block;">
+                            <div style="padding:8px; font-size:0.8rem; color:#666; text-align:center; text-transform:none;">${s.naziv}</div>
+                            <button onclick="obrisiFotografiju(${i})" style="position:absolute; top:6px; right:6px; background:#ff4757; color:white; border:none; border-radius:50%; width:26px; height:26px; cursor:pointer; font-weight:700;">✕</button>
+                        </div>
+                    `;
+                });
+                galerija += '</div>';
+            }
+
+            return `
+                <div class="vrtic-title">
+                    <span class="icon">🖼️</span>
+                    <span>Fotografije — ${aktivniVrtic.naziv}</span>
+                </div>
+                <div class="grupa-content">
+                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                        <label class="btn-small btn-add" style="padding:12px 20px; font-size:0.95rem; cursor:pointer;">
+                            📤 Učitaj fotografije
+                            <input type="file" accept="image/*" multiple style="display:none;" onchange="ucitajFotografije(event)">
+                        </label>
+                        <span style="color:#999; font-size:0.85rem;">Ukupno: ${slike.length} fotografija</span>
+                    </div>
+                    ${galerija}
+                </div>
+            `;
+        }
+
+        function ucitajFotografije(event) {
+            const datoteke = event.target.files;
+            if (!datoteke || datoteke.length === 0) return;
+            if (!fotografije[aktivniVrtic.id]) fotografije[aktivniVrtic.id] = [];
+
+            let ucitano = 0;
+            for (let i = 0; i < datoteke.length; i++) {
+                const file = datoteke[i];
+                if (!file.type.startsWith('image/')) continue;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotografije[aktivniVrtic.id].push({ src: e.target.result, naziv: file.name });
+                    ucitano++;
+                    if (ucitano === datoteke.length) renderMainContent();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function obrisiFotografiju(index) {
+            if (!confirm('Obrisati fotografiju?')) return;
+            fotografije[aktivniVrtic.id].splice(index, 1);
             renderMainContent();
         }
 
