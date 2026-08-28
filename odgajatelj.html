@@ -441,20 +441,31 @@
                 return;
             }
 
+            const brDana = brojDanaUMjesecu(odabraniMjesecDjece);
+
             let daniHeader = '';
-            for (let d = 1; d <= 31; d++) daniHeader += `<th style="min-width:30px;">${d}</th>`;
+            for (let d = 1; d <= brDana; d++) daniHeader += `<th style="min-width:30px;">${d}</th>`;
 
             let redovi = '';
             djeca.forEach((d, i) => {
                 let daniCells = '';
-                for (let dan = 0; dan < 31; dan++) {
+                for (let dan = 0; dan < brDana; dan++) {
                     daniCells += `<td><span class="vrijeme-cell prazno" style="min-width:24px;" onclick="toggleDijeteDolazak(this)">·</span></td>`;
                 }
                 redovi += `<tr><td style="padding:6px; text-align:center; font-weight:600; color:#666;">${i+1}.</td><td style="padding:6px; text-transform:uppercase; font-weight:500; text-align:left;">${d}</td>${daniCells}</tr>`;
             });
 
+            let opcijeMjeseci = Object.keys(mjeseciDani).map(m =>
+                `<option ${m === odabraniMjesecDjece ? 'selected' : ''}>${m}</option>`
+            ).join('');
+
             sadrzaj.innerHTML = `
                 <p style="color:#666; margin-bottom:15px;">Grupa: <strong>${grupa}</strong> · ${prijavljeniVrtic.naziv}</p>
+                <div style="margin-bottom:15px;">
+                    <label style="color:#666; font-weight:600; margin-right:10px;">Mjesec:</label>
+                    <select class="mjesec-select" onchange="promijeniMjesecDjece(this.value)">${opcijeMjeseci}</select>
+                    <span style="color:#999; font-size:0.85rem; margin-left:10px;">(${brDana} dana)</span>
+                </div>
                 <div style="overflow-x:auto;">
                     <table style="width:100%; border-collapse:collapse; font-size:0.75rem;">
                         <thead><tr><th style="background:#4facfe; color:white; padding:6px;">Br.</th><th style="background:#4facfe; color:white; padding:6px; text-align:left;">Dijete</th>${daniHeader}</tr></thead>
@@ -463,6 +474,20 @@
                 </div>
                 <div class="info-box">💡 Klik na dan mijenja: prazno → ✓ (došao) → ✗ (odsutan).</div>
             `;
+        }
+
+        const mjeseciDani = {
+            'Rujan': 30, 'Listopad': 31, 'Studeni': 30, 'Prosinac': 31,
+            'Siječanj': 31, 'Veljača': 28, 'Ožujak': 31, 'Travanj': 30,
+            'Svibanj': 31, 'Lipanj': 30, 'Srpanj': 31, 'Kolovoz': 31
+        };
+        let odabraniMjesecDjece = 'Rujan';
+
+        function brojDanaUMjesecu(m) { return mjeseciDani[m] || 31; }
+
+        function promijeniMjesecDjece(m) {
+            odabraniMjesecDjece = m;
+            renderEvidencijaDjece();
         }
 
         function toggleDijeteDolazak(el) {
