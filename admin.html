@@ -933,9 +933,39 @@
                 vrtic: aktivniVrtic.naziv,
                 grupa: nazivGrupe,
                 tip: privolaTip === 'tablica' ? 'Tablica' : 'Tekst',
-                datum: datum
+                datumSlanja: datum,
+                datumZaprimanja: null,
+                status: 'poslano' // 'poslano', 'zaprimljeno', 'zakljucano'
             });
             alert('✅ Privola je poslana u vrtićku grupu ' + nazivGrupe + '!');
+        }
+
+        // Simulacija zaprimanja popunjene privole nazad
+        function zaprimiPrivolu(index) {
+            const zaOvajVrtic = poslanePrivole.filter(p => p.vrticId === aktivniVrtic.id);
+            const p = zaOvajVrtic[index];
+            p.datumZaprimanja = new Date().toLocaleDateString('hr-HR');
+            p.status = 'zaprimljeno';
+            renderMainContent();
+        }
+
+        function zakljucajPrivolu(index) {
+            const zaOvajVrtic = poslanePrivole.filter(p => p.vrticId === aktivniVrtic.id);
+            const p = zaOvajVrtic[index];
+            if (p.status !== 'zaprimljeno') {
+                alert('Privolu možete zaključati tek nakon što je zaprimljena.');
+                return;
+            }
+            if (!confirm('Zaključati privolu? Nakon zaključavanja se više ne može mijenjati.')) return;
+            p.status = 'zakljucano';
+            renderMainContent();
+        }
+
+        function statusBadge(status) {
+            if (status === 'poslano') return '<span style="background:#ffa502; color:white; padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:600;">📤 Poslano</span>';
+            if (status === 'zaprimljeno') return '<span style="background:#2ed573; color:white; padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:600;">📥 Zaprimljeno</span>';
+            if (status === 'zakljucano') return '<span style="background:#576574; color:white; padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:600;">🔒 Zaključano</span>';
+            return status;
         }
 
         function renderPoslanePrivole() {
@@ -947,26 +977,55 @@
 
             let redovi = '';
             zaOvajVrtic.forEach((p, i) => {
+                // Stupac: Vidi poslanu privolu
+                const vidiPoslanu = `<button class="btn-small btn-edit" onclick="alert('Prikaz poslane privole (${p.tip}) za grupu ${p.grupa}')">👁️ Vidi</button>`;
+
+                // Stupac: Datum zaprimanja + akcija
+                let zaprimljeno = '';
+                if (p.status === 'poslano') {
+                    zaprimljeno = `<button class="btn-small btn-add" onclick="zaprimiPrivolu(${i})">📥 Zaprimi</button>`;
+                } else {
+                    zaprimljeno = p.datumZaprimanja || '—';
+                }
+
+                // Stupac: Vidi zaprimljenu privolu
+                let vidiZaprimljenu = '—';
+                if (p.status === 'zaprimljeno' || p.status === 'zakljucano') {
+                    vidiZaprimljenu = `<button class="btn-small btn-edit" onclick="alert('Prikaz zaprimljene (popunjene) privole za grupu ${p.grupa}')">👁️ Vidi</button>`;
+                }
+
+                // Stupac: Status + zaključavanje
+                let statusCell = statusBadge(p.status);
+                if (p.status === 'zaprimljeno') {
+                    statusCell += `<br><button class="btn-small" style="background:#576574; color:white; margin-top:5px;" onclick="zakljucajPrivolu(${i})">🔒 Zaključaj</button>`;
+                }
+
                 redovi += `
                     <tr>
                         <td>${i + 1}.</td>
                         <td style="text-transform: none;">Grupa ${p.grupa}</td>
                         <td>${p.tip}</td>
-                        <td>${p.datum}</td>
-                        <td><span style="color:#2ed573; font-weight:600;">✓ Poslano</span></td>
+                        <td>${p.datumSlanja}</td>
+                        <td>${vidiPoslanu}</td>
+                        <td>${zaprimljeno}</td>
+                        <td>${vidiZaprimljenu}</td>
+                        <td>${statusCell}</td>
                     </tr>
                 `;
             });
 
+            const brPoslano = zaOvajVrtic.filter(p => p.status === 'poslano').length;
+            const brZaprimljeno = zaOvajVrtic.filter(p => p.status === 'zaprimljeno').length;
+            const brZakljucano = zaOvajVrtic.filter(p => p.status === 'zakljucano').length;
+
             return `
-                <div class="grupa-content">
+                <div class="grupa-content" style="overflow-x:auto;">
                     <div class="grupa-info">
                         <h3>Sve poslane privole — ${aktivniVrtic.naziv}</h3>
                         <div class="stats">
-                            <div class="stat-box">
-                                <div class="number">${zaOvajVrtic.length}</div>
-                                <div class="label">Poslano</div>
-                            </div>
+                            <div class="stat-box"><div class="number" style="color:#ffa502;">${brPoslano}</div><div class="label">Poslano</div></div>
+                            <div class="stat-box"><div class="number" style="color:#2ed573;">${brZaprimljeno}</div><div class="label">Zaprimljeno</div></div>
+                            <div class="stat-box"><div class="number" style="color:#576574;">${brZakljucano}</div><div class="label">Zaključano</div></div>
                         </div>
                     </div>
                     <table>
@@ -974,8 +1033,11 @@
                             <tr>
                                 <th>Br.</th>
                                 <th style="text-align:left;">Grupa</th>
-                                <th>Tip privole</th>
+                                <th>Tip</th>
                                 <th>Datum slanja</th>
+                                <th>Poslana privola</th>
+                                <th>Datum zaprimanja</th>
+                                <th>Zaprimljena privola</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
