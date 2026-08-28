@@ -157,14 +157,10 @@
         <!-- Prijava -->
         <div class="card login-card" id="login-card">
             <h2>Prijava odgajateljice</h2>
-            <label for="vrtic-select">Odaberite vrtić:</label>
-            <select id="vrtic-select" onchange="ucitajOdgajatelje()">
-                <option value="">-- Odaberite vrtić --</option>
-            </select>
-            <label for="odgajatelj-select">Odaberite svoje ime:</label>
-            <select id="odgajatelj-select">
-                <option value="">-- Prvo odaberite vrtić --</option>
-            </select>
+            <label for="ime-input">Ime:</label>
+            <input type="text" id="ime-input" placeholder="Unesite ime" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1rem; margin-bottom:15px;">
+            <label for="prezime-input">Prezime:</label>
+            <input type="text" id="prezime-input" placeholder="Unesite prezime" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1rem; margin-bottom:20px;">
             <button class="btn" onclick="prijava()">Prijava</button>
         </div>
 
@@ -249,36 +245,38 @@
 
         // Init prijava
         function initPrijava() {
-            const sel = document.getElementById('vrtic-select');
-            vrtici.forEach(v => {
-                const o = document.createElement('option');
-                o.value = v.id;
-                o.textContent = v.naziv;
-                sel.appendChild(o);
-            });
-        }
-
-        function ucitajOdgajatelje() {
-            const vrticId = parseInt(document.getElementById('vrtic-select').value, 10);
-            const sel = document.getElementById('odgajatelj-select');
-            sel.innerHTML = '<option value="">-- Odaberite svoje ime --</option>';
-            const vrtic = vrtici.find(v => v.id === vrticId);
-            if (!vrtic) return;
-            vrtic.odgajatelji.forEach(o => {
-                const opt = document.createElement('option');
-                opt.value = o.id;
-                opt.textContent = `${o.ime} ${o.prezime}`;
-                sel.appendChild(opt);
-            });
+            const ime = document.getElementById('ime-input');
+            const prezime = document.getElementById('prezime-input');
+            ime.addEventListener('keypress', e => { if (e.key === 'Enter') prezime.focus(); });
+            prezime.addEventListener('keypress', e => { if (e.key === 'Enter') prijava(); });
         }
 
         function prijava() {
-            const vrticId = parseInt(document.getElementById('vrtic-select').value, 10);
-            const odgId = parseInt(document.getElementById('odgajatelj-select').value, 10);
-            if (!vrticId || !odgId) { alert('Odaberite vrtić i svoje ime.'); return; }
+            const ime = document.getElementById('ime-input').value.trim();
+            const prezime = document.getElementById('prezime-input').value.trim();
+            if (!ime || !prezime) { alert('Unesite ime i prezime.'); return; }
 
-            prijavljeniVrtic = vrtici.find(v => v.id === vrticId);
-            prijavljeni = prijavljeniVrtic.odgajatelji.find(o => o.id === odgId);
+            // Potraži postoji li odgajateljica u nekom vrtiću
+            let nadjena = null;
+            let njenVrtic = null;
+            vrtici.forEach(v => {
+                v.odgajatelji.forEach(o => {
+                    if (o.ime.toLowerCase() === ime.toLowerCase() && o.prezime.toLowerCase() === prezime.toLowerCase()) {
+                        nadjena = o;
+                        njenVrtic = v;
+                    }
+                });
+            });
+
+            if (nadjena) {
+                prijavljeni = nadjena;
+                prijavljeniVrtic = njenVrtic;
+            } else {
+                // Nova odgajateljica koja nije u popisu - kreiraj privremeni profil
+                const noviId = 'gost_' + ime.toLowerCase() + '_' + prezime.toLowerCase();
+                prijavljeni = { id: noviId, ime: ime, prezime: prezime, radnoMjesto: 'Odgojiteljica' };
+                prijavljeniVrtic = { naziv: '—' };
+            }
 
             document.getElementById('login-card').style.display = 'none';
             document.getElementById('app').style.display = 'block';
@@ -295,6 +293,8 @@
         function odjava() {
             prijavljeni = null;
             prijavljeniVrtic = null;
+            document.getElementById('ime-input').value = '';
+            document.getElementById('prezime-input').value = '';
             document.getElementById('app').style.display = 'none';
             document.getElementById('login-card').style.display = 'block';
         }
