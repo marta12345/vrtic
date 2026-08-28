@@ -882,26 +882,40 @@
             let daniHeader = '';
             dani.forEach(d => { daniHeader += `<th style="min-width:46px;">${d}</th>`; });
 
+            function cellHtml(val, i, danIndex, vrsta) {
+                const prikaz = val ? val : '·';
+                const jeVrijeme = val && val !== '-';
+                let stil = 'display:inline-block; min-width:42px; padding:3px 4px; border-radius:5px; cursor:pointer; font-size:0.7rem; font-weight:600;';
+                if (val === '-') stil += 'background:#ff4757; color:white;';
+                else if (jeVrijeme) stil += 'background:#2ed573; color:white;';
+                else stil += 'background:#eee; color:#999;';
+                return `<td><span style="${stil}" onclick="unesiVrijemeZaposlenik(${i}, ${danIndex}, '${vrsta}')">${prikaz}</span></td>`;
+            }
+
             let tableRows = '';
             zaposlenici.forEach((z, i) => {
-                let daniCells = '';
+                if (!z.dolasci) z.dolasci = new Array(31).fill('');
+                if (!z.odlasci) z.odlasci = new Array(31).fill('');
+
+                let dolazakCells = '';
+                let odlazakCells = '';
                 dani.forEach((dan) => {
-                    const val = z.dolasci ? (z.dolasci[dan - 1] || '') : '';
-                    const prikaz = val ? val : '·';
-                    const jeVrijeme = val && val !== '-';
-                    let stil = 'display:inline-block; min-width:42px; padding:3px 4px; border-radius:5px; cursor:pointer; font-size:0.7rem; font-weight:600;';
-                    if (val === '-') stil += 'background:#ff4757; color:white;';
-                    else if (jeVrijeme) stil += 'background:#2ed573; color:white;';
-                    else stil += 'background:#eee; color:#999;';
-                    daniCells += `<td><span style="${stil}" onclick="unesiVrijemeZaposlenik(${i}, ${dan - 1})">${prikaz}</span></td>`;
+                    dolazakCells += cellHtml(z.dolasci[dan - 1] || '', i, dan - 1, 'dolazak');
+                    odlazakCells += cellHtml(z.odlasci[dan - 1] || '', i, dan - 1, 'odlazak');
                 });
 
+                // Prvi red: ime + radno mjesto (rowspan 2) + dolazak
                 tableRows += `
                     <tr>
-                        <td>${i + 1}.</td>
-                        <td>${z.ime} ${z.prezime}</td>
-                        <td style="text-transform:none; font-size:0.8rem; color:#666;">${z.radnoMjesto || ''}</td>
-                        ${daniCells}
+                        <td rowspan="2">${i + 1}.</td>
+                        <td rowspan="2" style="text-align:left;">${z.ime} ${z.prezime}</td>
+                        <td rowspan="2" style="text-transform:none; font-size:0.8rem; color:#666;">${z.radnoMjesto || ''}</td>
+                        <td style="text-align:left; font-size:0.7rem; color:#2ed573; font-weight:700; background:#f4fff7;">Dolazak</td>
+                        ${dolazakCells}
+                    </tr>
+                    <tr style="border-bottom:2px solid #ccc;">
+                        <td style="text-align:left; font-size:0.7rem; color:#e94560; font-weight:700; background:#fff4f6;">Odlazak</td>
+                        ${odlazakCells}
                     </tr>
                 `;
             });
@@ -924,6 +938,7 @@
                                 <th>Br.</th>
                                 <th style="text-align:left;">Ime i prezime</th>
                                 <th>Radno mjesto</th>
+                                <th></th>
                                 ${daniHeader}
                             </tr>
                         </thead>
@@ -931,7 +946,7 @@
                             ${tableRows}
                         </tbody>
                     </table>
-                    <p style="margin-top:12px; color:#666; font-size:0.8rem;">💡 Kliknite na dan da upišete <strong>vrijeme dolaska</strong> (npr. 07:30). Ostavite prazno za "-" (odsutan).</p>
+                    <p style="margin-top:12px; color:#666; font-size:0.8rem;">💡 Svaki zaposlenik ima red <strong style="color:#2ed573;">Dolazak</strong> i <strong style="color:#e94560;">Odlazak</strong>. Kliknite na dan i upišite brojke (npr. <strong>730</strong> → automatski 07:30). Prazno = "-" (odsutan), "x" = brisanje.</p>
                     <div style="margin-top:15px;">
                         <button class="btn-small btn-add" onclick="dodajZaposlenika()" style="padding:8px 16px;">+ Dodaj zaposlenika</button>
                     </div>
@@ -941,16 +956,36 @@
             return content;
         }
 
-        function unesiVrijemeZaposlenik(zapIndex, danIndex) {
+        function formatirajVrijeme(unos) {
+            // Ukloni sve osim brojki
+            let broj = unos.replace(/\D/g, '');
+            if (broj.length === 0) return null;
+            if (broj.length === 1) broj = '0' + broj + '00';      // 7 -> 0700
+            else if (broj.length === 2) broj = broj + '00';        // 73 -> 7300 (ali obično sati)
+            else if (broj.length === 3) broj = '0' + broj;          // 730 -> 0730
+            broj = broj.slice(0, 4);
+            let sati = parseInt(broj.slice(0, 2), 10);
+            let minute = parseInt(broj.slice(2, 4), 10);
+            if (sati > 23) sati = 23;
+            if (minute > 59) minute = 59;
+            return String(sati).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+        }
+
+        function unesiVrijemeZaposlenik(zapIndex, danIndex, vrsta) {
             const z = aktivniVrtic.zaposlenici[zapIndex];
-            if (!z.dolasci) z.dolasci = new Array(31).fill('');
-            const trenutno = z.dolasci[danIndex];
-            const unos = prompt('Unesite vrijeme dolaska (npr. 07:30). Ostavite prazno za "-" (odsutan), ili upišite "x" za brisanje:', trenutno && trenutno !== '-' ? trenutno : '');
+            const polje = vrsta === 'odlazak' ? 'odlasci' : 'dolasci';
+            if (!z[polje]) z[polje] = new Array(31).fill('');
+            const trenutno = z[polje][danIndex];
+            const naziv = vrsta === 'odlazak' ? 'odlaska' : 'dolaska';
+            const unos = prompt(`Unesite vrijeme ${naziv} (npr. 730 → 07:30). Prazno = "-" (odsutan), "x" = brisanje:`, trenutno && trenutno !== '-' ? trenutno : '');
             if (unos === null) return; // Odustao
             const v = unos.trim();
-            if (v === '') z.dolasci[danIndex] = '-';       // prazno = odsutan
-            else if (v.toLowerCase() === 'x') z.dolasci[danIndex] = ''; // reset
-            else z.dolasci[danIndex] = v;                   // vrijeme dolaska
+            if (v === '') z[polje][danIndex] = '-';                    // prazno = odsutan
+            else if (v.toLowerCase() === 'x') z[polje][danIndex] = ''; // reset
+            else {
+                const formatirano = formatirajVrijeme(v);
+                z[polje][danIndex] = formatirano || '-';
+            }
             renderMainContent();
         }
 
