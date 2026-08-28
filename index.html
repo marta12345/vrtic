@@ -289,6 +289,7 @@
         <div class="start-section" id="start-section">
             <button class="start-btn" onclick="pokreniPrivole()" style="margin-top: 15px;">Privole</button>
             <button class="start-btn" onclick="pokreniAplikaciju()">Evidencija ubrusa / mokrih maramica</button>
+            <button class="start-btn" onclick="pokreniSastanke()" style="margin-top: 15px;">Evidencija roditeljskih sastanaka</button>
         </div>
 
         <div style="position: fixed; bottom: 20px; left: 20px;">
@@ -382,6 +383,37 @@
 
         <div id="custom-tablice-container"></div>
 
+        <!-- Ekran: Evidencija roditeljskih sastanaka -->
+        <div class="app-content" id="sastanci-content">
+            <button class="close-btn" onclick="zatvori()">✕</button>
+            <h1>👪 Evidencija roditeljskih sastanaka</h1>
+
+            <div class="input-section" style="flex-direction: column; align-items: stretch;">
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;">
+                    <input type="text" id="sastanak-datum" placeholder="Datum (npr. 15.10.2026.)" style="width:180px;">
+                    <input type="text" id="sastanak-tema" placeholder="Tema sastanka" style="width:220px;">
+                    <input type="text" id="sastanak-prisutni" placeholder="Broj prisutnih" style="width:130px;">
+                    <button onclick="dodajSastanak()">Dodaj sastanak</button>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Br.</th>
+                            <th>Datum</th>
+                            <th>Tema</th>
+                            <th>Prisutnih</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tijelo-sastanci"></tbody>
+                </table>
+                <p class="empty-message" id="prazna-sastanci">Još nema evidentiranih sastanaka.</p>
+            </div>
+        </div>
+
         <!-- Sučelje za kreiranje nove tablice -->
         <div class="app-content" id="nova-tablica-content">
             <button class="close-btn" onclick="zatvori()">✕</button>
@@ -419,11 +451,13 @@
         let djeca = [];
         let customTablice = [];
         let customBrojac = 0;
+        let sastanci = [];
 
         function pokreniAplikaciju() {
             document.getElementById('start-section').style.display = 'none';
             document.getElementById('app-content').style.display = 'block';
             document.getElementById('privole-content').style.display = 'none';
+            document.getElementById('sastanci-content').style.display = 'none';
             sakrijeCustomTablice();
             document.getElementById('ime').focus();
         }
@@ -433,13 +467,64 @@
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('privole-content').style.display = 'block';
             document.getElementById('nova-tablica-content').style.display = 'none';
+            document.getElementById('sastanci-content').style.display = 'none';
             sakrijeCustomTablice();
+        }
+
+        function pokreniSastanke() {
+            document.getElementById('start-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('privole-content').style.display = 'none';
+            document.getElementById('nova-tablica-content').style.display = 'none';
+            document.getElementById('sastanci-content').style.display = 'block';
+            sakrijeCustomTablice();
+            prikaziSastanke();
+        }
+
+        function dodajSastanak() {
+            const datum = document.getElementById('sastanak-datum').value.trim();
+            const tema = document.getElementById('sastanak-tema').value.trim();
+            const prisutni = document.getElementById('sastanak-prisutni').value.trim();
+            if (!datum || !tema) { alert('Unesite datum i temu sastanka.'); return; }
+            sastanci.push({ datum, tema, prisutni: prisutni || '0' });
+            document.getElementById('sastanak-datum').value = '';
+            document.getElementById('sastanak-tema').value = '';
+            document.getElementById('sastanak-prisutni').value = '';
+            prikaziSastanke();
+        }
+
+        function obrisiSastanak(index) {
+            sastanci.splice(index, 1);
+            prikaziSastanke();
+        }
+
+        function prikaziSastanke() {
+            const tbody = document.getElementById('tijelo-sastanci');
+            const poruka = document.getElementById('prazna-sastanci');
+            tbody.innerHTML = '';
+            if (sastanci.length === 0) {
+                poruka.style.display = 'block';
+                return;
+            }
+            poruka.style.display = 'none';
+            sastanci.forEach((s, i) => {
+                const red = document.createElement('tr');
+                red.innerHTML = `
+                    <td>${i + 1}.</td>
+                    <td>${s.datum}</td>
+                    <td style="text-align:left;">${s.tema}</td>
+                    <td>${s.prisutni}</td>
+                    <td><button class="delete-btn" onclick="obrisiSastanak(${i})">✕</button></td>
+                `;
+                tbody.appendChild(red);
+            });
         }
 
         function zatvori() {
             document.getElementById('app-content').style.display = 'none';
             document.getElementById('privole-content').style.display = 'none';
             document.getElementById('nova-tablica-content').style.display = 'none';
+            document.getElementById('sastanci-content').style.display = 'none';
             sakrijeCustomTablice();
             document.getElementById('start-section').style.display = 'block';
         }
