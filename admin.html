@@ -880,17 +880,20 @@
             for (let i = 1; i <= 31; i++) dani.push(i);
 
             let daniHeader = '';
-            dani.forEach(d => { daniHeader += `<th>${d}</th>`; });
+            dani.forEach(d => { daniHeader += `<th style="min-width:46px;">${d}</th>`; });
 
             let tableRows = '';
             zaposlenici.forEach((z, i) => {
                 let daniCells = '';
                 dani.forEach((dan) => {
                     const val = z.dolasci ? (z.dolasci[dan - 1] || '') : '';
-                    let klasa = 'mjesec-oznaka';
-                    if (val === '+') klasa += ' plus';
-                    else if (val === '-') klasa += ' minus';
-                    daniCells += `<td><span class="${klasa}" onclick="toggleDolazakZaposlenik(${i}, ${dan - 1})">${val || '·'}</span></td>`;
+                    const prikaz = val ? val : '·';
+                    const jeVrijeme = val && val !== '-';
+                    let stil = 'display:inline-block; min-width:42px; padding:3px 4px; border-radius:5px; cursor:pointer; font-size:0.7rem; font-weight:600;';
+                    if (val === '-') stil += 'background:#ff4757; color:white;';
+                    else if (jeVrijeme) stil += 'background:#2ed573; color:white;';
+                    else stil += 'background:#eee; color:#999;';
+                    daniCells += `<td><span style="${stil}" onclick="unesiVrijemeZaposlenik(${i}, ${dan - 1})">${prikaz}</span></td>`;
                 });
 
                 tableRows += `
@@ -928,6 +931,7 @@
                             ${tableRows}
                         </tbody>
                     </table>
+                    <p style="margin-top:12px; color:#666; font-size:0.8rem;">💡 Kliknite na dan da upišete <strong>vrijeme dolaska</strong> (npr. 07:30). Ostavite prazno za "-" (odsutan).</p>
                     <div style="margin-top:15px;">
                         <button class="btn-small btn-add" onclick="dodajZaposlenika()" style="padding:8px 16px;">+ Dodaj zaposlenika</button>
                     </div>
@@ -937,13 +941,16 @@
             return content;
         }
 
-        function toggleDolazakZaposlenik(zapIndex, danIndex) {
+        function unesiVrijemeZaposlenik(zapIndex, danIndex) {
             const z = aktivniVrtic.zaposlenici[zapIndex];
             if (!z.dolasci) z.dolasci = new Array(31).fill('');
             const trenutno = z.dolasci[danIndex];
-            if (trenutno === '') z.dolasci[danIndex] = '+';
-            else if (trenutno === '+') z.dolasci[danIndex] = '-';
-            else z.dolasci[danIndex] = '';
+            const unos = prompt('Unesite vrijeme dolaska (npr. 07:30). Ostavite prazno za "-" (odsutan), ili upišite "x" za brisanje:', trenutno && trenutno !== '-' ? trenutno : '');
+            if (unos === null) return; // Odustao
+            const v = unos.trim();
+            if (v === '') z.dolasci[danIndex] = '-';       // prazno = odsutan
+            else if (v.toLowerCase() === 'x') z.dolasci[danIndex] = ''; // reset
+            else z.dolasci[danIndex] = v;                   // vrijeme dolaska
             renderMainContent();
         }
 
