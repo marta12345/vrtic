@@ -504,6 +504,12 @@
         let prikazSastanci = false;
         let sastanciGrupaId = null;
         let sastanci = {}; // { vrticId: { grupaNaziv: [ {datum, tema, prisutni, biljeske} ] } }
+        let prikazPlan = false;
+        let planGrupaId = null;
+        let planovi = {}; // { vrticId: { grupaNaziv: tekst } }
+        let prikazAnkete = false;
+        let anketeGrupaId = null;
+        let ankete = {}; // { vrticId: { grupaNaziv: [ {naziv, datum, odgovori} ] } }
         let fotoGrupaId = null;
         let ispricnice = {}; // { vrticId: [ {src, naziv, dijete, grupa} ] }
         let cijepni = {};    // { vrticId: [ {src, naziv, dijete, grupa} ] }
@@ -570,7 +576,7 @@
                 vrticRed.appendChild(strelica);
 
                 const btn = document.createElement('button');
-                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije && !prikazIspricnice && !prikazCijepni && !prikazSastanci ? ' active' : '');
+                btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije && !prikazIspricnice && !prikazCijepni && !prikazSastanci && !prikazPlan && !prikazAnkete ? ' active' : '');
                 btn.textContent = v.naziv;
                 btn.style.flex = '1';
                 btn.style.paddingLeft = '5px';
@@ -622,6 +628,18 @@
                     sastanciBtn.textContent = '👪 Evidencija roditeljskih sastanaka';
                     sastanciBtn.onclick = () => odaberiSastanke(v.id);
                     lista.appendChild(sastanciBtn);
+
+                    const planBtn = document.createElement('button');
+                    planBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazPlan ? ' active' : '');
+                    planBtn.textContent = '📋 Plan rada';
+                    planBtn.onclick = () => odaberiPlan(v.id);
+                    lista.appendChild(planBtn);
+
+                    const anketeBtn = document.createElement('button');
+                    anketeBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazAnkete ? ' active' : '');
+                    anketeBtn.textContent = '📊 Ankete';
+                    anketeBtn.onclick = () => odaberiAnkete(v.id);
+                    lista.appendChild(anketeBtn);
                 }
             });
         }
@@ -723,13 +741,38 @@
             renderMainContent();
         }
 
+        function resetiPrikaze() {
+            prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
+            prikazFotografije = false; prikazIspricnice = false; prikazCijepni = false;
+            prikazSastanci = false; prikazPlan = false; prikazAnkete = false;
+        }
+
         function odaberiSastanke(vrticId) {
             otvoreniVrtici[vrticId] = true;
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = null;
-            prikazPrivole = false; prikazDolasci = false; prikazZaposlenici = false;
-            prikazFotografije = false; prikazIspricnice = false; prikazCijepni = false;
+            resetiPrikaze();
             prikazSastanci = true;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiPlan(vrticId) {
+            otvoreniVrtici[vrticId] = true;
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            resetiPrikaze();
+            prikazPlan = true;
+            renderVrticiSidebar();
+            renderMainContent();
+        }
+
+        function odaberiAnkete(vrticId) {
+            otvoreniVrtici[vrticId] = true;
+            aktivniVrtic = vrtici.find(v => v.id === vrticId);
+            aktivnaGrupa = null;
+            resetiPrikaze();
+            prikazAnkete = true;
             renderVrticiSidebar();
             renderMainContent();
         }
@@ -778,6 +821,16 @@
 
             if (prikazSastanci) {
                 main.innerHTML = renderSastanci();
+                return;
+            }
+
+            if (prikazPlan) {
+                main.innerHTML = renderPlan();
+                return;
+            }
+
+            if (prikazAnkete) {
+                main.innerHTML = renderAnkete();
                 return;
             }
 
@@ -1033,6 +1086,130 @@
             if (trenutno === '') dijete.dolasci[danIndex] = '+';
             else if (trenutno === '+') dijete.dolasci[danIndex] = '-';
             else dijete.dolasci[danIndex] = '';
+            renderMainContent();
+        }
+
+        function renderPlan() {
+            if (aktivniVrtic.grupe.length === 0) {
+                return `<div class="vrtic-title"><span class="icon">📋</span><span>Plan rada — ${aktivniVrtic.naziv}</span></div>
+                    <div class="grupa-content"><div class="empty-state"><div class="icon">📋</div><p>Ovaj vrtić nema grupa.</p></div></div>`;
+            }
+            if (!planGrupaId || !aktivniVrtic.grupe.find(g => g.id === planGrupaId)) {
+                planGrupaId = aktivniVrtic.grupe[0].id;
+            }
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === planGrupaId);
+            if (!planovi[aktivniVrtic.id]) planovi[aktivniVrtic.id] = {};
+            const tekst = planovi[aktivniVrtic.id][aktGrupa.naziv] || '';
+
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                grupeTabs += `<button class="grupa-tab ${planGrupaId === g.id ? 'active' : ''}" onclick="odaberiPlanGrupu(${g.id})">${g.naziv}</button>`;
+            });
+
+            return `
+                <div class="vrtic-title"><span class="icon">📋</span><span>Plan rada — ${aktivniVrtic.naziv}</span></div>
+                <div class="grupe-tabs">${grupeTabs}</div>
+                <div class="grupa-content">
+                    <h3 style="color:#667eea; margin-bottom:15px;">👶 Grupa: ${aktGrupa.naziv}</h3>
+                    <textarea id="plan-textarea" style="width:100%; min-height:300px; padding:15px; border:1px solid #ddd; border-radius:8px; font-size:0.95rem; line-height:1.6; font-family:inherit;" placeholder="Upišite plan rada za grupu ${aktGrupa.naziv}...">${tekst}</textarea>
+                    <div style="text-align:right; margin-top:15px;">
+                        <button class="btn-small btn-add" style="padding:10px 25px; font-size:0.95rem;" onclick="spremiPlan()">💾 Spremi plan</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function odaberiPlanGrupu(grupaId) { planGrupaId = grupaId; renderMainContent(); }
+
+        function spremiPlan() {
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === planGrupaId);
+            const tekst = document.getElementById('plan-textarea').value;
+            if (!planovi[aktivniVrtic.id]) planovi[aktivniVrtic.id] = {};
+            planovi[aktivniVrtic.id][aktGrupa.naziv] = tekst;
+            alert('✅ Plan rada spremljen za grupu ' + aktGrupa.naziv + '.');
+        }
+
+        function renderAnkete() {
+            if (aktivniVrtic.grupe.length === 0) {
+                return `<div class="vrtic-title"><span class="icon">📊</span><span>Ankete — ${aktivniVrtic.naziv}</span></div>
+                    <div class="grupa-content"><div class="empty-state"><div class="icon">📊</div><p>Ovaj vrtić nema grupa.</p></div></div>`;
+            }
+            if (!anketeGrupaId || !aktivniVrtic.grupe.find(g => g.id === anketeGrupaId)) {
+                anketeGrupaId = aktivniVrtic.grupe[0].id;
+            }
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === anketeGrupaId);
+            if (!ankete[aktivniVrtic.id]) ankete[aktivniVrtic.id] = {};
+            const lista = ankete[aktivniVrtic.id][aktGrupa.naziv] || [];
+
+            let grupeTabs = '';
+            aktivniVrtic.grupe.forEach(g => {
+                const broj = (ankete[aktivniVrtic.id] && ankete[aktivniVrtic.id][g.naziv]) ? ankete[aktivniVrtic.id][g.naziv].length : 0;
+                grupeTabs += `<button class="grupa-tab ${anketeGrupaId === g.id ? 'active' : ''}" onclick="odaberiAnketuGrupu(${g.id})">${g.naziv} (${broj})</button>`;
+            });
+
+            let redovi = '';
+            if (lista.length === 0) {
+                redovi = `<tr><td colspan="5" style="text-align:center; color:#999; padding:30px;">Nema anketa za grupu ${aktGrupa.naziv}.</td></tr>`;
+            } else {
+                lista.forEach((a, i) => {
+                    redovi += `
+                        <tr>
+                            <td>${i + 1}.</td>
+                            <td style="text-transform:none; text-align:left;">${a.naziv}</td>
+                            <td>${a.datum}</td>
+                            <td>${a.odgovori}</td>
+                            <td><button class="btn-small btn-delete" onclick="obrisiAnketu(${i})">✕</button></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            return `
+                <div class="vrtic-title"><span class="icon">📊</span><span>Ankete — ${aktivniVrtic.naziv}</span></div>
+                <div class="grupe-tabs">${grupeTabs}</div>
+                <div class="grupa-content">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+                        <h3 style="color:#667eea;">👶 Grupa: ${aktGrupa.naziv} <span style="color:#999; font-weight:400; font-size:0.85rem;">(${lista.length} anketa)</span></h3>
+                        <button class="btn-small btn-add" style="padding:10px 18px; font-size:0.9rem;" onclick="dodajAnketu()">+ Nova anketa</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th style="text-align:left;">Naziv ankete</th>
+                                <th>Datum</th>
+                                <th>Odgovora</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>${redovi}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function odaberiAnketuGrupu(grupaId) { anketeGrupaId = grupaId; renderMainContent(); }
+
+        function dodajAnketu() {
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === anketeGrupaId);
+            const naziv = prompt('Naziv ankete:', '');
+            if (naziv === null || !naziv.trim()) return;
+            const datum = prompt('Datum:', new Date().toLocaleDateString('hr-HR'));
+            const odgovori = prompt('Broj prikupljenih odgovora:', '0');
+            if (!ankete[aktivniVrtic.id]) ankete[aktivniVrtic.id] = {};
+            if (!ankete[aktivniVrtic.id][aktGrupa.naziv]) ankete[aktivniVrtic.id][aktGrupa.naziv] = [];
+            ankete[aktivniVrtic.id][aktGrupa.naziv].push({
+                naziv: naziv.trim(),
+                datum: (datum || '').trim() || '—',
+                odgovori: (odgovori || '').trim() || '0'
+            });
+            renderMainContent();
+        }
+
+        function obrisiAnketu(index) {
+            if (!confirm('Obrisati anketu?')) return;
+            const aktGrupa = aktivniVrtic.grupe.find(g => g.id === anketeGrupaId);
+            ankete[aktivniVrtic.id][aktGrupa.naziv].splice(index, 1);
             renderMainContent();
         }
 
