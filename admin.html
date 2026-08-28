@@ -498,6 +498,25 @@
         let prikazPrivole = false;
         let prikazDolasci = false;
         let prikazZaposlenici = false;
+        let odabraniMjesecDjeca = 'Rujan';
+        let odabraniMjesecZaposlenici = 'Rujan';
+
+        // Mjeseci pedagoške godine s brojem dana (za tekuću godinu 2026/2027)
+        const mjeseciInfo = {
+            'Rujan': 30, 'Listopad': 31, 'Studeni': 30, 'Prosinac': 31,
+            'Siječanj': 31, 'Veljača': 28, 'Ožujak': 31, 'Travanj': 30,
+            'Svibanj': 31, 'Lipanj': 30, 'Srpanj': 31, 'Kolovoz': 31
+        };
+
+        function brojDanaUMjesecu(naziv) {
+            return mjeseciInfo[naziv] || 31;
+        }
+
+        function optionsMjeseci(odabrani) {
+            return Object.keys(mjeseciInfo).map(m =>
+                `<option ${m === odabrani ? 'selected' : ''}>${m}</option>`
+            ).join('');
+        }
         let privolaTip = 'tablica'; // 'tablica', 'tekst' ili 'poslane'
         let privolaGrupaId = null;
         let poslanePrivole = []; // { vrticId, grupa, tip, datum }
@@ -786,8 +805,9 @@
             `;
 
             if (aktivnaGrupa && aktivnaGrupa.djeca.length > 0) {
+                const brDana = brojDanaUMjesecu(odabraniMjesecDjeca);
                 const dani = [];
-                for (let i = 1; i <= 31; i++) dani.push(i);
+                for (let i = 1; i <= brDana; i++) dani.push(i);
 
                 let tableRows = '';
                 aktivnaGrupa.djeca.forEach((d, i) => {
@@ -817,11 +837,9 @@
                 content += `
                     <div class="grupa-content" style="overflow-x: auto;">
                         <div class="grupa-info">
-                            <h3>Grupa: ${aktivnaGrupa.naziv} — Mjesec: <select id="mjesec-select" onchange="renderMainContent()" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
-                                <option>Rujan</option><option>Listopad</option><option>Studeni</option><option>Prosinac</option>
-                                <option>Siječanj</option><option>Veljača</option><option>Ožujak</option><option>Travanj</option>
-                                <option>Svibanj</option><option>Lipanj</option><option>Srpanj</option><option>Kolovoz</option>
-                            </select></h3>
+                            <h3>Grupa: ${aktivnaGrupa.naziv} — Mjesec: <select onchange="promijeniMjesecDjeca(this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid #ddd;">
+                                ${optionsMjeseci(odabraniMjesecDjeca)}
+                            </select> <span style="color:#999; font-size:0.85rem;">(${brDana} dana)</span></h3>
                         </div>
                         <table style="font-size: 0.75rem;">
                             <thead>
@@ -876,8 +894,9 @@
                 return content;
             }
 
+            const brDana = brojDanaUMjesecu(odabraniMjesecZaposlenici);
             const dani = [];
-            for (let i = 1; i <= 31; i++) dani.push(i);
+            for (let i = 1; i <= brDana; i++) dani.push(i);
 
             let daniHeader = '';
             dani.forEach(d => { daniHeader += `<th style="min-width:46px;">${d}</th>`; });
@@ -924,11 +943,9 @@
             content += `
                 <div class="grupa-content" style="overflow-x:auto;">
                     <div class="grupa-info">
-                        <h3>Zaposlenici — Mjesec: <select onchange="renderMainContent()" style="padding:5px; border-radius:4px; border:1px solid #ddd;">
-                            <option>Rujan</option><option>Listopad</option><option>Studeni</option><option>Prosinac</option>
-                            <option>Siječanj</option><option>Veljača</option><option>Ožujak</option><option>Travanj</option>
-                            <option>Svibanj</option><option>Lipanj</option><option>Srpanj</option><option>Kolovoz</option>
-                        </select></h3>
+                        <h3>Zaposlenici — Mjesec: <select onchange="promijeniMjesecZaposlenici(this.value)" style="padding:5px; border-radius:4px; border:1px solid #ddd;">
+                            ${optionsMjeseci(odabraniMjesecZaposlenici)}
+                        </select> <span style="color:#999; font-size:0.85rem;">(${brDana} dana)</span></h3>
                         <div class="stats">
                             <div class="stat-box"><div class="number">${zaposlenici.length}</div><div class="label">Zaposlenika</div></div>
                         </div>
@@ -971,6 +988,16 @@
             if (sati > 23) sati = 23;
             if (minute > 59) minute = 59;
             return String(sati).padStart(2, '0') + ':' + String(minute).padStart(2, '0');
+        }
+
+        function promijeniMjesecDjeca(mjesec) {
+            odabraniMjesecDjeca = mjesec;
+            renderMainContent();
+        }
+
+        function promijeniMjesecZaposlenici(mjesec) {
+            odabraniMjesecZaposlenici = mjesec;
+            renderMainContent();
         }
 
         function unesiVrijemeZaposlenik(zapIndex, danIndex, vrsta) {
