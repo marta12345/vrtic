@@ -1213,13 +1213,15 @@
                 sadrzaj = renderPrivolaTablica(grupa, nazivGrupe);
             } else if (privolaTip === 'tekst') {
                 sadrzaj = renderPrivolaTekst(nazivGrupe);
-            } else {
+            } else if (privolaTip === 'poslane') {
                 sadrzaj = renderPoslanePrivole();
+            } else {
+                sadrzaj = renderZaprimljenePrivole();
             }
 
             // Grupe tabovi za odabir kojoj grupi se šalje (samo za nove privole)
             let grupeTabsHtml = '';
-            if (privolaTip !== 'poslane') {
+            if (privolaTip !== 'poslane' && privolaTip !== 'zaprimljene') {
                 let grupeTabs = '';
                 aktivniVrtic.grupe.forEach(g => {
                     grupeTabs += `<button class="grupa-tab ${privolaGrupaId === g.id ? 'active' : ''}" onclick="odaberiPrivolaGrupu(${g.id})">${g.naziv}</button>`;
@@ -1236,6 +1238,7 @@
                     <button class="grupa-tab ${privolaTip === 'tablica' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tablica')">📋 Nova privola - tablica</button>
                     <button class="grupa-tab ${privolaTip === 'tekst' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('tekst')">📄 Nova privola - tekst</button>
                     <button class="grupa-tab ${privolaTip === 'poslane' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('poslane')">📬 Sve poslane privole</button>
+                    <button class="grupa-tab ${privolaTip === 'zaprimljene' ? 'active' : ''}" style="background:#fff; border:1px solid #ddd; border-radius:8px;" onclick="postaviPrivolaTip('zaprimljene')">📥 Sve zaprimljene privole</button>
                 </div>
                 ${grupeTabsHtml}
                 ${sadrzaj}
@@ -1465,6 +1468,71 @@
                                 <th>Tip</th>
                                 <th>Datum slanja</th>
                                 <th>Poslana privola</th>
+                                <th>Datum zaprimanja</th>
+                                <th>Zaprimljena privola</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${redovi}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderZaprimljenePrivole() {
+            // Samo privole koje su zaprimljene ili zaključane
+            const zaprimljene = poslanePrivole.filter(p => p.vrticId === aktivniVrtic.id && (p.status === 'zaprimljeno' || p.status === 'zakljucano'));
+
+            if (zaprimljene.length === 0) {
+                return `<div class="grupa-content"><div class="empty-state"><div class="icon">📭</div><p>Još nema zaprimljenih privola za ovaj vrtić.</p></div></div>`;
+            }
+
+            let redovi = '';
+            zaprimljene.forEach((p, i) => {
+                const vidiZaprimljenu = `<button class="btn-small btn-edit" onclick="alert('Prikaz zaprimljene (popunjene) privole za grupu ${p.grupa}')">👁️ Vidi</button>`;
+                let statusCell = statusBadge(p.status);
+                if (p.status === 'zaprimljeno') {
+                    // pronađi globalni indeks u filtriranom "poslane" popisu radi zaključavanja
+                    const svePoslane = poslanePrivole.filter(x => x.vrticId === aktivniVrtic.id);
+                    const gi = svePoslane.indexOf(p);
+                    statusCell += `<br><button class="btn-small" style="background:#576574; color:white; margin-top:5px;" onclick="zakljucajPrivolu(${gi})">🔒 Zaključaj</button>`;
+                }
+                redovi += `
+                    <tr>
+                        <td>${i + 1}.</td>
+                        <td style="text-transform:none;">Grupa ${p.grupa}</td>
+                        <td style="text-transform:none;">${p.nazivPrivole || 'Privola'}</td>
+                        <td>${p.tip}</td>
+                        <td>${p.datumSlanja}</td>
+                        <td>${p.datumZaprimanja || '—'}</td>
+                        <td>${vidiZaprimljenu}</td>
+                        <td>${statusCell}</td>
+                    </tr>
+                `;
+            });
+
+            const brZaprimljeno = zaprimljene.filter(p => p.status === 'zaprimljeno').length;
+            const brZakljucano = zaprimljene.filter(p => p.status === 'zakljucano').length;
+
+            return `
+                <div class="grupa-content" style="overflow-x:auto;">
+                    <div class="grupa-info">
+                        <h3>Sve zaprimljene privole — ${aktivniVrtic.naziv}</h3>
+                        <div class="stats">
+                            <div class="stat-box"><div class="number" style="color:#2ed573;">${brZaprimljeno}</div><div class="label">Zaprimljeno</div></div>
+                            <div class="stat-box"><div class="number" style="color:#576574;">${brZakljucano}</div><div class="label">Zaključano</div></div>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Br.</th>
+                                <th style="text-align:left;">Grupa</th>
+                                <th style="text-align:left;">Naziv privole</th>
+                                <th>Tip</th>
+                                <th>Datum slanja</th>
                                 <th>Datum zaprimanja</th>
                                 <th>Zaprimljena privola</th>
                                 <th>Status</th>
