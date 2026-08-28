@@ -499,7 +499,18 @@
         let prikazDolasci = false;
         let prikazZaposlenici = false;
         let prikazFotografije = false;
-        let fotografije = {}; // { vrticId: [ {src, naziv} ] }
+        // { vrticId: [ {src, naziv, grupa} ] } - fotografije koje admin prima iz svake grupe
+        function demoFoto(boja, tekst) {
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='150'><rect width='200' height='150' fill='${boja}'/><text x='100' y='80' font-size='16' fill='white' text-anchor='middle' font-family='sans-serif'>${tekst}</text></svg>`;
+            return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+        }
+        let fotografije = {
+            1: [
+                { src: demoFoto('#ff9ff3', 'Leptirići 1'), naziv: 'izlet.jpg', grupa: 'Leptirići' },
+                { src: demoFoto('#feca57', 'Leptirići 2'), naziv: 'igra.jpg', grupa: 'Leptirići' },
+                { src: demoFoto('#54a0ff', 'Bubamare 1'), naziv: 'radionica.jpg', grupa: 'Bubamare' }
+            ]
+        };
         let odabraniMjesecDjeca = 'Rujan';
         let odabraniMjesecZaposlenici = 'Rujan';
 
@@ -937,44 +948,61 @@
         }
 
         function renderFotografije() {
-            const slike = fotografije[aktivniVrtic.id] || [];
+            const sveSlike = fotografije[aktivniVrtic.id] || [];
 
-            let galerija = '';
-            if (slike.length === 0) {
-                galerija = `<div class="empty-state"><div class="icon">🖼️</div><p>Još nema učitanih fotografija za ovaj vrtić.</p></div>`;
+            // Grupiraj slike po vrtićkoj grupi
+            let sekcije = '';
+            if (aktivniVrtic.grupe.length === 0) {
+                sekcije = `<div class="empty-state"><div class="icon">🖼️</div><p>Ovaj vrtić nema grupa.</p></div>`;
             } else {
-                galerija = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:15px; margin-top:20px;">';
-                slike.forEach((s, i) => {
-                    galerija += `
-                        <div style="border:1px solid #eee; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
-                            <img src="${s.src}" style="width:100%; height:150px; object-fit:cover; display:block;">
-                            <div style="padding:8px; font-size:0.8rem; color:#666; text-align:center; text-transform:none;">${s.naziv}</div>
-                            <button onclick="obrisiFotografiju(${i})" style="position:absolute; top:6px; right:6px; background:#ff4757; color:white; border:none; border-radius:50%; width:26px; height:26px; cursor:pointer; font-weight:700;">✕</button>
+                aktivniVrtic.grupe.forEach(g => {
+                    const slikeGrupe = sveSlike.filter(s => s.grupa === g.naziv);
+                    let galerija = '';
+                    if (slikeGrupe.length === 0) {
+                        galerija = `<p style="color:#999; padding:15px 0; font-size:0.85rem;">Nema fotografija iz ove grupe.</p>`;
+                    } else {
+                        galerija = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:15px; margin-top:12px;">';
+                        slikeGrupe.forEach((s) => {
+                            const globalniIndex = sveSlike.indexOf(s);
+                            galerija += `
+                                <div style="border:1px solid #eee; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); position:relative;">
+                                    <img src="${s.src}" style="width:100%; height:130px; object-fit:cover; display:block;">
+                                    <div style="padding:8px; font-size:0.75rem; color:#666; text-align:center; text-transform:none;">${s.naziv}</div>
+                                    <button onclick="obrisiFotografiju(${globalniIndex})" style="position:absolute; top:6px; right:6px; background:#ff4757; color:white; border:none; border-radius:50%; width:26px; height:26px; cursor:pointer; font-weight:700;">✕</button>
+                                </div>
+                            `;
+                        });
+                        galerija += '</div>';
+                    }
+
+                    sekcije += `
+                        <div style="margin-bottom:30px;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-bottom:2px solid #f0f0f0; padding-bottom:10px;">
+                                <h3 style="color:#667eea;">👶 Grupa: ${g.naziv} <span style="color:#999; font-weight:400; font-size:0.85rem;">(${slikeGrupe.length})</span></h3>
+                                <label class="btn-small btn-add" style="padding:8px 16px; cursor:pointer;">
+                                    📤 Učitaj u grupu ${g.naziv}
+                                    <input type="file" accept="image/*" multiple style="display:none;" onchange="ucitajFotografije(event, '${g.naziv}')">
+                                </label>
+                            </div>
+                            ${galerija}
                         </div>
                     `;
                 });
-                galerija += '</div>';
             }
 
             return `
                 <div class="vrtic-title">
                     <span class="icon">🖼️</span>
-                    <span>Fotografije — ${aktivniVrtic.naziv}</span>
+                    <span>Fotografije po grupama — ${aktivniVrtic.naziv}</span>
                 </div>
                 <div class="grupa-content">
-                    <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
-                        <label class="btn-small btn-add" style="padding:12px 20px; font-size:0.95rem; cursor:pointer;">
-                            📤 Učitaj fotografije
-                            <input type="file" accept="image/*" multiple style="display:none;" onchange="ucitajFotografije(event)">
-                        </label>
-                        <span style="color:#999; font-size:0.85rem;">Ukupno: ${slike.length} fotografija</span>
-                    </div>
-                    ${galerija}
+                    <p style="color:#666; font-size:0.9rem; margin-bottom:20px;">Admin prima fotografije iz svake vrtićke grupe. Ukupno učitano: <strong>${sveSlike.length}</strong></p>
+                    ${sekcije}
                 </div>
             `;
         }
 
-        function ucitajFotografije(event) {
+        function ucitajFotografije(event, nazivGrupe) {
             const datoteke = event.target.files;
             if (!datoteke || datoteke.length === 0) return;
             if (!fotografije[aktivniVrtic.id]) fotografije[aktivniVrtic.id] = [];
@@ -982,10 +1010,10 @@
             let ucitano = 0;
             for (let i = 0; i < datoteke.length; i++) {
                 const file = datoteke[i];
-                if (!file.type.startsWith('image/')) continue;
+                if (!file.type.startsWith('image/')) { ucitano++; continue; }
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    fotografije[aktivniVrtic.id].push({ src: e.target.result, naziv: file.name });
+                    fotografije[aktivniVrtic.id].push({ src: e.target.result, naziv: file.name, grupa: nazivGrupe });
                     ucitano++;
                     if (ucitano === datoteke.length) renderMainContent();
                 };
