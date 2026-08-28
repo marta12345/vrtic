@@ -525,43 +525,67 @@
         let vrticIdBrojac = 4;
         let grupaIdBrojac = 10;
 
+        let otvoreniVrtici = {}; // { vrticId: true/false }
+
+        function toggleVrtic(vrticId, event) {
+            if (event) event.stopPropagation();
+            otvoreniVrtici[vrticId] = !otvoreniVrtici[vrticId];
+            renderVrticiSidebar();
+        }
+
         function renderVrticiSidebar() {
             const lista = document.getElementById('vrtic-lista');
             lista.innerHTML = '';
             vrtici.forEach(v => {
+                const jeOtvoren = !!otvoreniVrtici[v.id];
+
+                // Redak vrtića sa strelicom
+                const vrticRed = document.createElement('div');
+                vrticRed.style.display = 'flex';
+                vrticRed.style.alignItems = 'center';
+
+                const strelica = document.createElement('button');
+                strelica.textContent = jeOtvoren ? '▼' : '▶';
+                strelica.style.cssText = 'background:none; border:none; color:#a0a0b0; cursor:pointer; font-size:0.7rem; padding:12px 5px 12px 15px;';
+                strelica.onclick = (e) => toggleVrtic(v.id, e);
+                vrticRed.appendChild(strelica);
+
                 const btn = document.createElement('button');
                 btn.className = 'vrtic-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && !prikazPrivole && !prikazDolasci && !prikazZaposlenici && !prikazFotografije ? ' active' : '');
                 btn.textContent = v.naziv;
-                btn.onclick = () => odaberiVrtic(v.id);
-                lista.appendChild(btn);
+                btn.style.flex = '1';
+                btn.style.paddingLeft = '5px';
+                btn.onclick = () => { otvoreniVrtici[v.id] = true; odaberiVrtic(v.id); };
+                vrticRed.appendChild(btn);
 
-                // Privole kartica ispod svakog vrtića
-                const privolaBtn = document.createElement('button');
-                privolaBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazPrivole ? ' active' : '');
-                privolaBtn.textContent = '📝 Privole';
-                privolaBtn.onclick = () => odaberiPrivole(v.id);
-                lista.appendChild(privolaBtn);
+                lista.appendChild(vrticRed);
 
-                // Evidencija dolazaka djece kartica
-                const dolasciBtn = document.createElement('button');
-                dolasciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazDolasci ? ' active' : '');
-                dolasciBtn.textContent = '📅 Evidencija dolazaka djece';
-                dolasciBtn.onclick = () => odaberiDolazke(v.id);
-                lista.appendChild(dolasciBtn);
+                // Pod-kartice samo ako je vrtić otvoren
+                if (jeOtvoren) {
+                    const privolaBtn = document.createElement('button');
+                    privolaBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazPrivole ? ' active' : '');
+                    privolaBtn.textContent = '📝 Privole';
+                    privolaBtn.onclick = () => odaberiPrivole(v.id);
+                    lista.appendChild(privolaBtn);
 
-                // Evidencija dolazaka zaposlenika kartica
-                const zaposleniciBtn = document.createElement('button');
-                zaposleniciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazZaposlenici ? ' active' : '');
-                zaposleniciBtn.textContent = '🧑‍🏫 Evidencija dolazaka zaposlenika';
-                zaposleniciBtn.onclick = () => odaberiZaposlenike(v.id);
-                lista.appendChild(zaposleniciBtn);
+                    const dolasciBtn = document.createElement('button');
+                    dolasciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazDolasci ? ' active' : '');
+                    dolasciBtn.textContent = '📅 Evidencija dolazaka djece';
+                    dolasciBtn.onclick = () => odaberiDolazke(v.id);
+                    lista.appendChild(dolasciBtn);
 
-                // Fotografije kartica
-                const fotoBtn = document.createElement('button');
-                fotoBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazFotografije ? ' active' : '');
-                fotoBtn.textContent = '🖼️ Fotografije';
-                fotoBtn.onclick = () => odaberiFotografije(v.id);
-                lista.appendChild(fotoBtn);
+                    const zaposleniciBtn = document.createElement('button');
+                    zaposleniciBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazZaposlenici ? ' active' : '');
+                    zaposleniciBtn.textContent = '🧑‍🏫 Evidencija dolazaka zaposlenika';
+                    zaposleniciBtn.onclick = () => odaberiZaposlenike(v.id);
+                    lista.appendChild(zaposleniciBtn);
+
+                    const fotoBtn = document.createElement('button');
+                    fotoBtn.className = 'vrtic-tab privola-tab' + (aktivniVrtic && aktivniVrtic.id === v.id && prikazFotografije ? ' active' : '');
+                    fotoBtn.textContent = '🖼️ Fotografije';
+                    fotoBtn.onclick = () => odaberiFotografije(v.id);
+                    lista.appendChild(fotoBtn);
+                }
             });
         }
 
@@ -577,6 +601,7 @@
         }
 
         function odaberiPrivole(vrticId) {
+            otvoreniVrtici[vrticId] = true;
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = null;
             prikazPrivole = true;
@@ -589,6 +614,7 @@
         }
 
         function odaberiDolazke(vrticId) {
+            otvoreniVrtici[vrticId] = true;
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = aktivniVrtic.grupe.length > 0 ? aktivniVrtic.grupe[0] : null;
             prikazPrivole = false;
@@ -600,6 +626,7 @@
         }
 
         function odaberiZaposlenike(vrticId) {
+            otvoreniVrtici[vrticId] = true;
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = null;
             prikazPrivole = false;
@@ -611,6 +638,7 @@
         }
 
         function odaberiFotografije(vrticId) {
+            otvoreniVrtici[vrticId] = true;
             aktivniVrtic = vrtici.find(v => v.id === vrticId);
             aktivnaGrupa = null;
             prikazPrivole = false;
