@@ -225,6 +225,10 @@
                         <span style="font-size:2rem;">📝</span>
                         <span>Privole</span>
                     </button>
+                    <button class="menu-btn" onclick="otvoriEkran('sastanci')">
+                        <span style="font-size:2rem;">👪</span>
+                        <span>Evidencija roditeljskih sastanaka</span>
+                    </button>
                 </div>
             </div>
 
@@ -282,6 +286,13 @@
                 <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
                 <h2 style="color:#333; margin:15px 0;">📝 Privole</h2>
                 <div id="privole-sadrzaj"></div>
+            </div>
+
+            <!-- Ekran: Evidencija roditeljskih sastanaka -->
+            <div class="card ekran" id="ekran-sastanci" style="display:none;">
+                <button class="btn btn-back" onclick="natrag()">← Natrag na izbornik</button>
+                <h2 style="color:#333; margin:15px 0;">👪 Evidencija roditeljskih sastanaka</h2>
+                <div id="sastanci-sadrzaj"></div>
             </div>
         </div>
     </div>
@@ -370,7 +381,65 @@
                 renderEvidencijaDjece();
             } else if (ekran === 'privole') {
                 renderPrivole();
+            } else if (ekran === 'sastanci') {
+                renderSastanci();
             }
+        }
+
+        let sastanciLista = [];
+
+        function renderSastanci() {
+            const sadrzaj = document.getElementById('sastanci-sadrzaj');
+            let redovi = '';
+            if (sastanciLista.length === 0) {
+                redovi = `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">Nema evidentiranih sastanaka.</td></tr>`;
+            } else {
+                redovi = sastanciLista.map((s, i) => `
+                    <tr>
+                        <td style="padding:8px; border-bottom:1px solid #eee; text-align:center; font-weight:600; color:#666;">${i+1}.</td>
+                        <td style="padding:8px; border-bottom:1px solid #eee;">${s.datum}</td>
+                        <td style="padding:8px; border-bottom:1px solid #eee;">${s.tema}</td>
+                        <td style="padding:8px; border-bottom:1px solid #eee; text-align:center;">${s.prisutni}</td>
+                        <td style="padding:8px; border-bottom:1px solid #eee; text-align:center;"><button style="background:#ff4757; color:white; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;" onclick="obrisiSastanak(${i})">✕</button></td>
+                    </tr>
+                `).join('');
+            }
+            sadrzaj.innerHTML = `
+                <p style="color:#666; margin-bottom:15px;">Grupa: <strong>${prijavljeni.grupa}</strong> · ${prijavljeniVrtic.naziv}</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+                    <input type="text" id="s-datum" placeholder="Datum (npr. 15.10.2026.)" style="padding:10px; border:2px solid #ddd; border-radius:8px; width:180px;">
+                    <input type="text" id="s-tema" placeholder="Tema sastanka" style="padding:10px; border:2px solid #ddd; border-radius:8px; width:220px;">
+                    <input type="text" id="s-prisutni" placeholder="Broj prisutnih" style="padding:10px; border:2px solid #ddd; border-radius:8px; width:130px;">
+                    <button class="btn" onclick="dodajSastanak()">+ Dodaj sastanak</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr>
+                        <th style="background:#4facfe; color:white; padding:10px;">Br.</th>
+                        <th style="background:#4facfe; color:white; padding:10px; text-align:left;">Datum</th>
+                        <th style="background:#4facfe; color:white; padding:10px; text-align:left;">Tema</th>
+                        <th style="background:#4facfe; color:white; padding:10px;">Prisutnih</th>
+                        <th style="background:#4facfe; color:white; padding:10px;"></th>
+                    </tr></thead>
+                    <tbody>${redovi}</tbody>
+                </table>
+                <div style="text-align:right; margin-top:20px;">
+                    <button class="btn" onclick="alert('✅ Evidencija poslana ravnatelju i roditeljima grupe ${prijavljeni.grupa}.')">📤 Pošalji</button>
+                </div>
+            `;
+        }
+
+        function dodajSastanak() {
+            const datum = document.getElementById('s-datum').value.trim();
+            const tema = document.getElementById('s-tema').value.trim();
+            const prisutni = document.getElementById('s-prisutni').value.trim();
+            if (!datum || !tema) { alert('Unesite datum i temu sastanka.'); return; }
+            sastanciLista.push({ datum, tema, prisutni: prisutni || '0' });
+            renderSastanci();
+        }
+
+        function obrisiSastanak(i) {
+            sastanciLista.splice(i, 1);
+            renderSastanci();
         }
 
         function renderPrivole() {
