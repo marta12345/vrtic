@@ -434,10 +434,10 @@
                 id: 1,
                 naziv: 'DV Sunce',
                 zaposlenici: [
-                    { ime: 'Marija', prezime: 'Horvat', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Ivana', prezime: 'Kovač', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Petra', prezime: 'Novak', radnoMjesto: 'Ravnateljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Josip', prezime: 'Barić', radnoMjesto: 'Domar', dolasci: new Array(31).fill('') }
+                    { ime: 'Marija', prezime: 'Horvat', radnoMjesto: 'Odgojiteljica', grupa: 'Leptirići', dolasci: new Array(31).fill('') },
+                    { ime: 'Ivana', prezime: 'Kovač', radnoMjesto: 'Odgojiteljica', grupa: 'Bubamare', dolasci: new Array(31).fill('') },
+                    { ime: 'Petra', prezime: 'Novak', radnoMjesto: 'Ravnateljica', grupa: '—', dolasci: new Array(31).fill('') },
+                    { ime: 'Josip', prezime: 'Barić', radnoMjesto: 'Domar', grupa: '—', dolasci: new Array(31).fill('') }
                 ],
                 grupe: [
                     { id: 1, naziv: 'Leptirići', djeca: [
@@ -459,9 +459,9 @@
                 id: 2,
                 naziv: 'DV Radost',
                 zaposlenici: [
-                    { ime: 'Ana', prezime: 'Marić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Sanja', prezime: 'Perić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Katarina', prezime: 'Jurić', radnoMjesto: 'Ravnateljica', dolasci: new Array(31).fill('') }
+                    { ime: 'Ana', prezime: 'Marić', radnoMjesto: 'Odgojiteljica', grupa: 'Medvjedići', dolasci: new Array(31).fill('') },
+                    { ime: 'Sanja', prezime: 'Perić', radnoMjesto: 'Odgojiteljica', grupa: 'Pčelice', dolasci: new Array(31).fill('') },
+                    { ime: 'Katarina', prezime: 'Jurić', radnoMjesto: 'Ravnateljica', grupa: '—', dolasci: new Array(31).fill('') }
                 ],
                 grupe: [
                     { id: 1, naziv: 'Medvjedići', djeca: [
@@ -480,8 +480,8 @@
                 id: 3,
                 naziv: 'DV Cvrčak',
                 zaposlenici: [
-                    { ime: 'Martina', prezime: 'Stanić', radnoMjesto: 'Odgojiteljica', dolasci: new Array(31).fill('') },
-                    { ime: 'Dario', prezime: 'Kralj', radnoMjesto: 'Ravnatelj', dolasci: new Array(31).fill('') }
+                    { ime: 'Martina', prezime: 'Stanić', radnoMjesto: 'Odgojiteljica', grupa: 'Ribice', dolasci: new Array(31).fill('') },
+                    { ime: 'Dario', prezime: 'Kralj', radnoMjesto: 'Ravnatelj', grupa: '—', dolasci: new Array(31).fill('') }
                 ],
                 grupe: [
                     { id: 1, naziv: 'Ribice', djeca: [
@@ -904,12 +904,13 @@
                     odlazakCells += cellHtml(z.odlasci[dan - 1] || '', i, dan - 1, 'odlazak');
                 });
 
-                // Prvi red: ime + radno mjesto (rowspan 2) + dolazak
+                // Prvi red: ime + radno mjesto + grupa (rowspan 2) + dolazak
                 tableRows += `
                     <tr>
                         <td rowspan="2">${i + 1}.</td>
                         <td rowspan="2" style="text-align:left;">${z.ime} ${z.prezime}</td>
                         <td rowspan="2" style="text-transform:none; font-size:0.8rem; color:#666;">${z.radnoMjesto || ''}</td>
+                        <td rowspan="2" style="text-transform:none; font-size:0.8rem; color:#667eea; font-weight:600;">${z.grupa || '—'}</td>
                         <td style="text-align:left; font-size:0.7rem; color:#2ed573; font-weight:700; background:#f4fff7;">Dolazak</td>
                         ${dolazakCells}
                     </tr>
@@ -938,6 +939,7 @@
                                 <th>Br.</th>
                                 <th style="text-align:left;">Ime i prezime</th>
                                 <th>Radno mjesto</th>
+                                <th>Grupa</th>
                                 <th></th>
                                 ${daniHeader}
                             </tr>
@@ -995,12 +997,15 @@
             const prezime = prompt('Prezime zaposlenika:');
             if (!prezime || !prezime.trim()) return;
             const radnoMjesto = prompt('Radno mjesto:', 'Odgojiteljica');
+            const grupa = prompt('Vrtićka grupa (ostavite prazno ako nije vezan uz grupu):', '');
             if (!aktivniVrtic.zaposlenici) aktivniVrtic.zaposlenici = [];
             aktivniVrtic.zaposlenici.push({
                 ime: ime.trim(),
                 prezime: prezime.trim(),
                 radnoMjesto: (radnoMjesto || '').trim(),
-                dolasci: new Array(31).fill('')
+                grupa: (grupa || '').trim() || '—',
+                dolasci: new Array(31).fill(''),
+                odlasci: new Array(31).fill('')
             });
             renderMainContent();
         }
