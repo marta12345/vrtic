@@ -185,18 +185,8 @@
     <div class="container">
         <h1>🧑‍🏫 Evidencija radnog vremena</h1>
 
-        <!-- Prijava -->
-        <div class="card login-card" id="login-card">
-            <h2>Prijava odgajateljice</h2>
-            <label for="ime-input">Ime:</label>
-            <input type="text" id="ime-input" placeholder="Unesite ime" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1rem; margin-bottom:15px;">
-            <label for="prezime-input">Prezime:</label>
-            <input type="text" id="prezime-input" placeholder="Unesite prezime" style="width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:1rem; margin-bottom:20px;">
-            <button class="btn" onclick="prijava()">Prijava</button>
-        </div>
-
-        <!-- Nakon prijave -->
-        <div id="app" style="display:none;">
+        <!-- Aplikacija (bez prijave) -->
+        <div id="app">
             <!-- Header s profilom -->
             <div class="card">
                 <div class="user-header">
@@ -207,7 +197,7 @@
                             <p id="user-detalji"></p>
                         </div>
                     </div>
-                    <button class="btn btn-logout" onclick="odjava()">Odjava</button>
+                    <select id="odg-select" onchange="promijeniOdgajatelja(this.value)" style="padding:10px; border:2px solid #ddd; border-radius:8px; font-size:0.95rem;"></select>
                 </div>
             </div>
 
@@ -317,49 +307,37 @@
             localStorage.setItem(kljucKorisnika(odgId), JSON.stringify(podaci));
         }
 
-        // Init prijava
-        function initPrijava() {
-            const ime = document.getElementById('ime-input');
-            const prezime = document.getElementById('prezime-input');
-            ime.addEventListener('keypress', e => { if (e.key === 'Enter') prezime.focus(); });
-            prezime.addEventListener('keypress', e => { if (e.key === 'Enter') prijava(); });
-        }
-
-        function prijava() {
-            const ime = document.getElementById('ime-input').value.trim();
-            const prezime = document.getElementById('prezime-input').value.trim();
-            if (!ime || !prezime) { alert('Unesite ime i prezime.'); return; }
-
-            // Potraži postoji li odgajateljica u nekom vrtiću
-            let nadjena = null;
-            let njenVrtic = null;
+        // Init - automatski učitaj prvog odgajatelja (bez prijave)
+        function init() {
+            // Popuni dropdown svim odgajateljima
+            const sel = document.getElementById('odg-select');
+            sel.innerHTML = '';
             vrtici.forEach(v => {
                 v.odgajatelji.forEach(o => {
-                    if (o.ime.toLowerCase() === ime.toLowerCase() && o.prezime.toLowerCase() === prezime.toLowerCase()) {
-                        nadjena = o;
-                        njenVrtic = v;
-                    }
+                    const opt = document.createElement('option');
+                    opt.value = v.id + '_' + o.id;
+                    opt.textContent = `${o.ime} ${o.prezime} (${v.naziv})`;
+                    sel.appendChild(opt);
                 });
             });
 
-            if (nadjena) {
-                prijavljeni = nadjena;
-                prijavljeniVrtic = njenVrtic;
-            } else {
-                // Nova odgajateljica koja nije u popisu - kreiraj privremeni profil
-                const noviId = 'gost_' + ime.toLowerCase() + '_' + prezime.toLowerCase();
-                prijavljeni = { id: noviId, ime: ime, prezime: prezime, radnoMjesto: 'Odgojiteljica', grupa: '—', djeca: [] };
-                prijavljeniVrtic = { naziv: '—' };
-            }
+            // Učitaj prvog odgajatelja
+            prijavljeniVrtic = vrtici[0];
+            prijavljeni = vrtici[0].odgajatelji[0];
+            ucitajProfil();
+        }
 
-            document.getElementById('login-card').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
+        function promijeniOdgajatelja(vrijednost) {
+            const [vId, oId] = vrijednost.split('_').map(Number);
+            prijavljeniVrtic = vrtici.find(v => v.id === vId);
+            prijavljeni = prijavljeniVrtic.odgajatelji.find(o => o.id === oId);
+            ucitajProfil();
+        }
 
+        function ucitajProfil() {
             document.getElementById('avatar').textContent = prijavljeni.ime[0] + prijavljeni.prezime[0];
             document.getElementById('user-ime').textContent = `${prijavljeni.ime} ${prijavljeni.prezime}`;
             document.getElementById('user-detalji').textContent = `${prijavljeni.radnoMjesto} · ${prijavljeniVrtic.naziv}`;
-
-            // Prikaži izbornik, sakrij ekrane
             document.getElementById('izbornik').style.display = 'block';
             document.querySelectorAll('.ekran').forEach(e => e.style.display = 'none');
         }
@@ -446,15 +424,6 @@
             if (el.textContent === '·') { el.textContent = '✓'; el.className = 'vrijeme-cell ima'; }
             else if (el.textContent === '✓') { el.textContent = '✗'; el.className = 'vrijeme-cell odsutan'; }
             else { el.textContent = '·'; el.className = 'vrijeme-cell prazno'; }
-        }
-
-        function odjava() {
-            prijavljeni = null;
-            prijavljeniVrtic = null;
-            document.getElementById('ime-input').value = '';
-            document.getElementById('prezime-input').value = '';
-            document.getElementById('app').style.display = 'none';
-            document.getElementById('login-card').style.display = 'block';
         }
 
         function renderTablica() {
@@ -572,7 +541,7 @@
             `).join('');
         }
 
-        initPrijava();
+        init();
     </script>
 </body>
 </html>
